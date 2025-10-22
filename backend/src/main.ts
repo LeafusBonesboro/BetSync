@@ -4,11 +4,11 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // ✅ Explicit and safe CORS configuration
   app.enableCors({
     origin: [
-      'https://bet-sync-beige.vercel.app', // your Vercel frontend
-      'http://localhost:3000',             // local dev
+      'http://localhost:3000',              // Local dev
+      'https://bet-sync-vuzf.vercel.app',   // Production
+      /\.vercel\.app$/,                     // Preview deployments (regex)
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
