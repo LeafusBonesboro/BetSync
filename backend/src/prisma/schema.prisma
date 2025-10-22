@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Bet {
+  id        Int      @id @default(autoincrement())
+  event     String
+  market    String
+  stake     Float
+  odds      Int
+  status    String   @default("Pending")
+  createdAt DateTime @default(now())
+
+   imageUrl  String?   // for the Discord image
+  link      String? 
+}
+
