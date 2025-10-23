@@ -20,3 +20,14 @@ model Bet {
   link      String? 
 }
 
+model ExpertAnalysis {
+  id           Int      @id @default(autoincrement())
+  expertName   String
+  title        String?
+  summary      String?
+  transcript   String    // markdown text
+  parsedData   Json      // predictions, insights, structured info
+  filePath     String?
+  createdAt    DateTime  @default(now())
+}
+
