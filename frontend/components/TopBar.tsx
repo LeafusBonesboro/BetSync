@@ -21,8 +21,8 @@ export default function TopBar() {
         <Link href="/research" className="hover:text-amber-400 transition">
           Research
         </Link>
-        <Link href="/about" className="hover:text-amber-400 transition">
-          About
+        <Link href="/scoreboard" className="hover:text-amber-400 transition">
+          Scoreboard
         </Link>
       </div>
     </nav>

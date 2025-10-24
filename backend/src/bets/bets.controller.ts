@@ -5,7 +5,7 @@ import { BetsService } from './bets.service';
 export class BetsController {
   constructor(private readonly betsService: BetsService) {}
 
-  // Create one bet (used by the Discord bot)
+  // Create one bet (used by Discord bot)
   @Post()
   async create(@Body() body: any) {
     try {
@@ -17,15 +17,21 @@ export class BetsController {
     }
   }
 
-  // Fetch all bets (for your frontend / dashboard)
+  // Fetch all bets
   @Get()
   async findAll() {
     return this.betsService.findAll();
   }
 
-  // Fetch a specific bet by ID (optional)
+  // Fetch a specific bet by ID
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.betsService.findOne(Number(id));
+  }
+
+  // Fetch bets for a specific game (optional)
+  @Get('game/:eventId')
+  async findByGame(@Param('eventId') eventId: string) {
+    return this.betsService.findByEvent(eventId);
   }
 }

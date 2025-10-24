@@ -16,8 +16,9 @@ model Bet {
   status    String   @default("Pending")
   createdAt DateTime @default(now())
 
-   imageUrl  String?   // for the Discord image
+  imageUrl  String?   // for the Discord image
   link      String? 
+  eventId   String?     // 🆕 add this line
 }
 
 model ExpertAnalysis {

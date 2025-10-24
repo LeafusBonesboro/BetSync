@@ -9,7 +9,7 @@ export default async function AnalysisDetail(props: { params: Promise<{ id: stri
   const res = await fetch(`${API_BASE}/analysis/${id}`, { cache: 'no-store' });
   const analysis = await res.json();
 
-  console.log('Fetched analysis:', analysis);
+
 
   return (
     <div className="max-w-5xl mx-auto p-8">

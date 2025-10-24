@@ -17,4 +17,40 @@ export class EspnService {
       throw new Error('Failed to fetch team statistics from ESPN API.');
     }
   }
+
+async getScoreboard(year: string, week: string) {
+  const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?year=${year}&week=${week}`;
+  const { data } = await firstValueFrom(this.httpService.get(url));
+
+  return data.events.map((e) => {
+    const comp = e.competitions[0];
+    const home = comp.competitors.find((c) => c.homeAway === 'home');
+    const away = comp.competitors.find((c) => c.homeAway === 'away');
+    return {
+      id: e.id,
+      name: e.name,
+      shortName: e.shortName,
+      date: e.date,
+      home: home.team.displayName,
+      away: away.team.displayName,
+      homeScore: home.score || null,
+      awayScore: away.score || null,
+      status: comp.status?.type?.name, // e.g. 'STATUS_SCHEDULED', 'STATUS_IN_PROGRESS', 'STATUS_FINAL'
+    };
+  });
+}
+
+
+
+  // 🆕 ESPN boxscore: get full game stats for a specific event
+  async getBoxscore(eventId: string) {
+    const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=${eventId}`;
+    const { data } = await firstValueFrom(this.httpService.get(url));
+    return {
+      id: eventId,
+      gameInfo: data.header,
+      boxscore: data.boxscore,
+      leaders: data.leaders,
+    };
+  }
 }
