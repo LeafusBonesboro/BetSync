@@ -22,24 +22,33 @@ export default function LoadBets({ gameId }: LoadBetsProps) {
   const [filter, setFilter] = useState<'all' | 'game'>('all');
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadBets = async () => {
-    try {
-      setRefreshing(true);
-      const endpoint =
-        filter === 'game' && gameId
-          ? `${process.env.NEXT_PUBLIC_API_URL}/api/bets/game/${gameId}`
-          : `${process.env.NEXT_PUBLIC_API_URL}/api/bets`;
+const loadBets = async () => {
+  try {
+    setRefreshing(true);
+    const endpoint =
+      filter === 'game' && gameId
+        ? `${process.env.NEXT_PUBLIC_API_URL}/bets/game/${gameId}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/bets`;
 
-      const res = await fetch(endpoint);
-      const data = await res.json();
+    const res = await fetch(endpoint);
+    const data = await res.json();
+
+    // ✅ Ensure we only assign an array to bets
+    if (Array.isArray(data)) {
       setBets(data);
-    } catch (error) {
-      console.error('Failed to load bets:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+    } else {
+      console.warn("Unexpected response format:", data);
+      setBets([]); // fallback to empty array to avoid crash
     }
-  };
+  } catch (error) {
+    console.error('Failed to load bets:', error);
+    setBets([]); // fallback here too
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+  }
+};
+
 
   useEffect(() => {
     loadBets();

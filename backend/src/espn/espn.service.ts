@@ -13,10 +13,22 @@ export class EspnService {
       const response = await firstValueFrom(this.httpService.get<any>(url));
       return response.data;
     } catch (error) {
-      console.error('Error fetching ESPN data:', error.message);
-      throw new Error('Failed to fetch team statistics from ESPN API.');
-    }
+  if (error instanceof Error) {
+    console.error(error.message);
+  } else {
+    console.error(String(error));
   }
+}
+
+  }
+  catch (error) {
+  if (error instanceof Error) {
+    console.error('Error fetching ESPN data:', error.message);
+  } else {
+    console.error('Unknown error:', error);
+  }
+}
+
 
 async getScoreboard(year: string, week: string) {
   const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?year=${year}&week=${week}`;

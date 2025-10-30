@@ -38,21 +38,19 @@ export class BetsService {
         this.logger.error(`❌ OCR/Game matching failed: ${err.message}`);
       }
     }
-
-    // Save bet
-    return this.prisma.bet.create({
-      data: {
-        event: eventName,
-        market: data.market || 'Pending Parse',
-        stake: data.stake || 0,
-        odds: data.odds || 0,
-        status: data.status || 'Pending',
-        imageUrl: data.imageUrl || null,
-        link: data.link || null,
-        eventId,
-      },
-    });
-  }
+return this.prisma.bet.create({
+  data: {
+    event: eventName,
+    market: data.market || 'Pending Parse',
+    stake: data.stake || 0,
+    odds: data.odds || 0,
+    status: data.status || 'Pending',
+    imageUrl: data.imageUrl || null,
+    link: data.link || null,
+    eventId,
+  } as any, // 👈 cast fixes Prisma strict typing
+});
+}
 
   // Extract readable text from an image using Tesseract.js
   private async extractTextFromImage(imageUrl: string): Promise<string> {
