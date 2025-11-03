@@ -1,0 +1,185 @@
+🧩 Phase 1 — Authentication + User Profiles
+🔹 1. Discord OAuth Setup
+Create an app in Discord Developer Portal.
+Get CLIENT_ID, CLIENT_SECRET, and set redirect URL → https://your-domain.com/api/auth/discord/callback.
+Scopes: identify, email (optional).
+🔹 2. Backend Flow (/auth/discord)
+When user clicks “Login with Discord”, they’re redirected to Discord OAuth.
+Discord → callback with code.
+Backend exchanges code for access_token.
+Use token to hit https://discord.com/api/users/@me → get:
+id, username, avatar, email.
+Upsert into Prisma:
+User { discordId, username, avatarUrl, email }
+Issue JWT or session cookie.
+Redirect → frontend dashboard/profile.
+🔹 3. Frontend
+“Login with Discord” button.
+After redirect, store JWT and fetch /me to show profile.
+Basic profile page showing:
+Avatar
+Username
+Joined date
+Bets posted
+🤖 Phase 2 — Discord Bot Integration
+🔹 1. Bot Flow
+Bot listens for image uploads.
+On upload, extract message.author.id.
+Call backend:
+POST /bets
+{
+  "discordId": "123456789",
+  "imageUrl": "https://cdn.discordapp.com/…"
+}
+Backend looks up user by discordId.
+If found → associate bet with user.
+If not → reply: “⚙️ Please link your Discord account at https://your-site.com/link.”
+🔹 2. Bet Storage
+model Bet {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  imageUrl  String
+  createdAt DateTime @default(now())
+}
+🔹 3. (Optionally) OCR Parsing
+For now, store raw images.
+Later, pipeline them through Google Vision → store parsed text + metadata.
+🧠 Phase 3— Frontend Bet Feed
+🔹 1. Views
+/feed – all bets from all users.
+/profile/:username – user’s own bets.
+/bet/:id – single bet page with image (or parsed details later).
+🔹 2. Backend API
+GET /bets → all bets.
+GET /bets?userId=xyz → specific user.
+GET /users/:id → profile data.
+🔹 3. Access Control
+Anyone can view feed and profiles.
+Only authenticated user can upload or link Discord bot activity.
+📈 Phase 4 — Enhancements (later)
+OCR Parsing Pipeline
+Extract player names, odds, markets.
+Generate cards automatically.
+Behavior Analytics
+“Most bet players”
+“Win rate by market”
+“Total stake vs return”
+Social
+Likes/comments on bets.
+Leaderboards or friend feeds.
+Admin Tools
+Moderate uploads.
+Flag invalid bets.
+🔄 Full Lifecycle Example
+1️⃣ User Joins → Logs In
+Clicks “Login with Discord.”
+Account created in DB with discordId.
+2️⃣ User Posts in Discord
+Bot detects image upload.
+Finds discordId → matches to user.
+Saves bet (image + timestamp).
+3️⃣ Frontend Feed
+Fetches and renders bet cards (imageUrl + user avatar).
+4️⃣ Later
+OCR text → generate structured data.
+Analytics feed or personal insights dashboard.                 ┌────────────────────────────────────────┐
+                 │            🧑‍💻 User Browser            │
+                 └────────────────────────────────────────┘
+                              │
+            [1] Click “Login with Discord”
+                              │
+                              ▼
+          ┌───────────────────────────────────┐
+          │      🔐 Discord OAuth Portal      │
+          └───────────────────────────────────┘
+                   │ (authorize scopes: identify, email)
+                   ▼
+      [2] Redirects to your backend callback: /auth/discord/callback
+                   │
+                   ▼
+┌────────────────────────────────────────────────────────────────────┐
+│                         🧠 Your Backend                            │
+│────────────────────────────────────────────────────────────────────│
+│  1️⃣ Exchange `code` for access_token via Discord API              │
+│  2️⃣ Fetch user info from `/users/@me`                             │
+│  3️⃣ Upsert into Prisma `User` table                               │
+│        User { id, discordId, username, avatarUrl, email }          │
+│  4️⃣ Issue JWT/session → redirect frontend                         │
+└────────────────────────────────────────────────────────────────────┘
+                   │
+                   ▼
+       [3] Redirects user → Web App Dashboard (/profile)
+                   │
+                   ▼
+     ┌────────────────────────────────────────┐
+     │      🖥️  BetSync Web Frontend          │
+     └────────────────────────────────────────┘
+       Shows: profile, uploaded bets, global feed
+                   │
+                   ▼
+     User uploads bets (optionally) from web or via Discord bot
+
+─────────────────────────────────────────────────────────────────────────────
+                    💬  DISCORD  BOT  INTEGRATION
+─────────────────────────────────────────────────────────────────────────────
+       User posts an image of a bet slip in your Discord server
+                              │
+                              ▼
+        ┌────────────────────────────────────────┐
+        │      🤖 BetSync Discord Bot            │
+        └────────────────────────────────────────┘
+         1️⃣ Detects message with attachment
+         2️⃣ Extracts:
+               - imageUrl
+               - author.discordId
+         3️⃣ Sends to backend:
+               POST /bets { discordId, imageUrl }
+                              │
+                              ▼
+┌────────────────────────────────────────────────────────────────────┐
+│                      🧠 Your Backend (again)                        │
+│────────────────────────────────────────────────────────────────────│
+│   - Lookup `User` by discordId                                     │
+│   - If found → create Bet record                                   │
+│       Bet { userId, imageUrl, createdAt }                          │
+│   - If not found → bot replies: “Please link your account”         │
+│   - Optional: send to Vision API for OCR                           │
+└────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+      🧾 Bet saved → shows up in Web App feed under user profile
+
+─────────────────────────────────────────────────────────────────────────────
+                    🧠 GOOGLE VISION  (optional phase)
+─────────────────────────────────────────────────────────────────────────────
+   Backend sends image → Vision API
+       ↓
+   Returns parsed text
+       ↓
+   Store `parsedText` or structured JSON
+       ↓
+   Frontend displays generated card (instead of raw image)
+
+─────────────────────────────────────────────────────────────────────────────
+                    🌐 FRONTEND DISPLAY
+─────────────────────────────────────────────────────────────────────────────
+    FEED PAGE (/feed):
+       - all bets sorted by date
+       - show username, avatar, bet image
+    PROFILE PAGE (/profile/:id):
+       - user’s bets only
+       - later: analytics summary (win rate, markets, etc.)
+    BET DETAIL (/bet/:id):
+       - full OCR text or parsed card
+
+─────────────────────────────────────────────────────────────────────────────
+                      🔄 USER LIFECYCLE SUMMARY
+─────────────────────────────────────────────────────────────────────────────
+1️⃣ User logs in via Discord (OAuth)
+2️⃣ Account created in backend (via Prisma)
+3️⃣ User posts bets via Discord bot
+4️⃣ Bot sends to backend → saved + linked
+5️⃣ Web app shows the user’s bets + public feed
+6️⃣ Later, OCR and analytics get added
+─────────────────────────────────────────────────────────────────────────────

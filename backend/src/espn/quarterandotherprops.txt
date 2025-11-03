@@ -1,0 +1,197 @@
+Ahh — now we’re getting into the fun stuff: player props, quarter splits, and real-time breakdowns.
+You’re absolutely right to ask this — because ESPN’s base /statistics endpoint doesn’t expose prop-level or per-quarter splits directly.
+
+Let’s unpack what’s possible, what’s missing, and how to design around it 👇
+
+🧩 1. What ESPN actually gives you
+
+From the endpoint you’re already calling:
+
+/v2/sports/football/leagues/nfl/athletes/{playerId}/statistics
+
+
+You get:
+
+Season totals
+
+Possibly game-level aggregates (depending on the “splits” object)
+
+Sometimes career or season-by-season splits
+
+BUT — you won’t see anything like:
+
+1st Quarter Yards
+
+2nd Half Touchdowns
+
+First-to-score props
+Those are not tracked in the ESPN “core” statistics model.
+
+⚙️ 2. Where quarter-level (1Q, 2Q, etc.) or prop-style data does live
+
+Here’s what you can do:
+
+Option A — ESPN’s Boxscore JSON (per game)
+
+Every game has a boxscore endpoint:
+
+https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event={eventId}
+
+
+This gives you:
+
+Full team + player breakdown by game
+
+Some drives / scoring plays / period data
+
+Example: passing yards, rushing, receiving for each player
+
+Scoring breakdown by quarter for the team
+
+So you can infer “1Q stats” by:
+
+Getting all plays or drives from the boxscore’s drives or plays objects
+
+Filtering by period.number === 1
+
+Summing relevant stats per player
+
+🧠 That means:
+You can build your own prop data (like “1Q yards”, “1H TDs”, etc.) by parsing this once per game.
+
+Option B — ESPN “play-by-play” feed
+
+This is more granular:
+
+https://cdn.espn.com/core/nfl/playbyplay?gameId={eventId}&xhr=1&render=false
+
+
+That JSON contains:
+
+Every play event
+
+Timestamps
+
+Quarter info
+
+Descriptions (“D. Henry rush for 8 yards”)
+
+Embedded stat objects per play
+
+From there, you can aggregate:
+
+Player stats by period
+
+Custom props (first TD, longest reception, etc.)
+
+So if you want to calculate 1Q stats for Derrick Henry:
+
+Pull playbyplay for his games
+
+Filter plays where period.number === 1
+
+Sum rushingYards where playerId === 3043078
+
+🧱 3. How to integrate this into your pipeline
+
+You can extend your ESPN service with a method like:
+
+async getPlayerGameProps(eventId: string, playerId: string) {
+  const url = `https://cdn.espn.com/core/nfl/playbyplay?gameId=${eventId}&xhr=1&render=false`;
+  const res = await fetch(url);
+  const json = await res.json();
+
+  const plays = json.gamepackageJSON.drives.previous.flatMap((d) => d.plays);
+  const playerPlays = plays.filter((p) =>
+    p.statistics?.some((s) => s.athletes?.some((a) => a.id === playerId))
+  );
+
+  const quarters = [1, 2, 3, 4];
+  const props = quarters.map((q) => {
+    const qPlays = playerPlays.filter((p) => p.period?.number === q);
+    const yards = qPlays
+      .flatMap((p) =>
+        p.statistics
+          ?.flatMap((s) => s.athletes)
+          ?.filter((a) => a.id === playerId)
+          ?.map((a) => a.stats?.yards ?? 0) ?? []
+      )
+      .reduce((a, b) => a + b, 0);
+    return { quarter: q, yards };
+  });
+
+  return props;
+}
+
+
+That would give you something like:
+
+[
+  { "quarter": 1, "yards": 22 },
+  { "quarter": 2, "yards": 41 },
+  { "quarter": 3, "yards": 18 },
+  { "quarter": 4, "yards": 9 }
+]
+
+🧠 4. Building “prop dashboards”
+
+Once you have that data:
+
+Store each gameId + playerId + props (yardsByQuarter, TDByQuarter, etc.)
+
+Query for trends (avg 1Q yards over last 5 games)
+
+Render in your dashboard with charts (Recharts or Chart.js)
+
+Example front-end idea:
+
++---------------------------------+
+| Derrick Henry - 1Q Rushing Yards|
+| Game 1: 28  Game 2: 12  Game 3: 45|
++---------------------------------+
+
+🪣 5. Summary — ESPN data tiers
+Type	ESPN Source	What you get	Notes
+Season totals	/athletes/:id/statistics	Yearly summary	No props or splits
+Game stats	/summary?event={id}	Boxscore + drives + scoring	Can extract team quarter totals
+Play-by-play	/core/nfl/playbyplay	Every play, every quarter	Use this for props, 1Q, halves
+✅ TL;DR
+
+ESPN doesn’t provide props or 1Q stats directly.
+
+But you can calculate them using playbyplay or summary endpoints.
+
+That’s the same data sportsbooks use to verify props anyway.
+
+Once you parse that, store it per game → you can power any prop dashboard you want.
+
+If you want, I can show you a ready-to-use function that takes an eventId and returns per-player 1Q stats (rushing, passing, receiving) — you can then insert that into your Prisma pipeline.
+
+6️⃣ (Optional) Add 1Q / Props Later
+
+Once you’ve got your base data pipeline working (season + per-game),
+we can extend with:
+
+/espn/playbyplay/:eventId
+
+Derived props (1Q yards, 1H TDs, etc.)
+
+That’s the “advanced analytics” layer you build after your foundation is solid.
+
+7️⃣ Automate It
+
+Once you’ve confirmed it all works manually, add a daily cron job:
+
+@Cron('0 3 * * *') // every day at 3am
+async refreshStats() {
+  await this.syncAllPlayers(2025, [teamIdsHere]);
+}
+
+🧠 TL;DR – What’s Next
+Step	Description	Goal
+✅ Done	ESPN controller & service	Pull data
+🔜 Step 1	Add Player & Stat Prisma models	Persist data
+🔜 Step 2	Modify syncAllPlayers() to store stats	Local DB caching
+🔜 Step 3	Add /espn/players route	Query from frontend
+🔜 Step 4	Build dashboard UI	Display data
+🔜 Step 5	Add cron + props later	Automate + expand

@@ -1,5 +1,7 @@
 import { Controller, Get, Query, Param } from '@nestjs/common';
 import { EspnService } from './espn.service';
+import { PlayerInfo } from './types';
+
 
 @Controller('espn')
 export class EspnController {
@@ -30,5 +32,36 @@ export class EspnController {
   @Get('boxscore/:eventId')
   async getBoxscore(@Param('eventId') eventId: string) {
     return this.espnService.getBoxscore(eventId);
+  }
+
+    // 🆕 get all players for a team
+    @Get('team/:teamId/roster')
+    async getTeamRoster(@Param('teamId') teamId: string) {
+      return this.espnService.getTeamRoster(parseInt(teamId, 10));
+    }
+
+    // 🆕 get single player stats
+    @Get('player/:playerId')
+    async getPlayerStats(@Param('playerId') playerId: string) {
+      return this.espnService.getPlayerStats(playerId);
+    }
+
+    // 🆕 sync all players for selected teams
+@Get('sync-all')
+async syncAll() {
+  console.log('🔁 Starting full ESPN sync...');
+  const teamIds = Array.from({ length: 32 }, (_, i) => i + 1);
+  const result = await this.espnService.syncAllPlayers(2025, teamIds);
+  console.log(`🎉 Sync complete. Synced ${result.synced} players`);
+  return result;
+}
+
+
+    @Get('players')
+  async getPlayers(
+    @Query('team') team?: string,
+    @Query('position') position?: string,
+  ) {
+    return this.espnService.getPlayers(team, position);
   }
 }

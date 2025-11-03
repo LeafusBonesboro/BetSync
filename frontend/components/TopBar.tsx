@@ -15,14 +15,17 @@ export default function TopBar() {
         <Link href="/" className="hover:text-amber-400 transition">
           Bets
         </Link>
-        <Link href="/team-stats" className="hover:text-amber-400 transition">
-          Team Stats
+        <Link href="/dashboard" className="hover:text-amber-400 transition">
+          Dashboard
         </Link>
         <Link href="/research" className="hover:text-amber-400 transition">
           Research
         </Link>
         <Link href="/scoreboard" className="hover:text-amber-400 transition">
           Scoreboard
+        </Link>
+        <Link href="/espn-data" className="hover:text-amber-400 transition">
+          Data
         </Link>
       </div>
     </nav>

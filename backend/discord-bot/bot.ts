@@ -1,9 +1,19 @@
-import "dotenv/config";
-import fetch from "node-fetch";
+import dotenv from "dotenv";
+dotenv.config();
+console.log("🔍 GOOGLE_APPLICATION_CREDENTIALS =", process.env.GOOGLE_APPLICATION_CREDENTIALS);
+import fs from "fs";
+if (process.env.GOOGLE_APPLICATION_CREDENTIALS && !fs.existsSync(process.env.GOOGLE_APPLICATION_CREDENTIALS)) {
+  console.error("❌ Key file NOT FOUND at that path!");
+}
+
 import { Client, GatewayIntentBits, Message } from "discord.js";
+import vision from "@google-cloud/vision";
+
+// ✅ Initialize the Vision client (no manual key load — it reads GOOGLE_APPLICATION_CREDENTIALS)
+const visionClient = new vision.ImageAnnotatorClient();
 
 // ✅ Initialize Discord client
-const client = new Client({
+const discord = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
@@ -11,95 +21,36 @@ const client = new Client({
   ],
 });
 
-// ✅ FanDuel link handler (still useful if people send direct links)
-async function handleFanDuelLink(link: string, message: Message): Promise<void> {
-  console.log("🎯 Found FanDuel link:", link);
 
+// 🧠 OCR function
+async function extractTextFromImage(imageUrl: string) {
   try {
-    const res = await fetch("http://localhost:4000/bets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        event: "FanDuel Bet Link",
-        market: "Shared via Discord",
-        stake: 0,
-        odds: 0,
-        status: "Pending",
-        link,
-      }),
-    });
-
-    const data = await res.json();
-    console.log("✅ Sent link to backend:", data);
+    const [result] = await visionClient.textDetection(imageUrl);
+    const text = result.textAnnotations?.[0]?.description || "No text detected";
+    console.log("🧠 Extracted text:\n", text);
+    return text;
   } catch (err) {
-    console.error("❌ Error sending FanDuel link:", err);
+    console.error("❌ Vision error:", err);
+    return null;
   }
 }
 
-// ✅ Handle any uploaded image (bet slip screenshots, photos, etc.)
-async function handleUploadedSlip(imageUrl: string, message: Message): Promise<void> {
+// 🖼️ Handle uploaded images
+async function handleUploadedSlip(imageUrl: string, message: Message) {
   console.log(`🖼️ Image uploaded: ${imageUrl}`);
+  const text = await extractTextFromImage(imageUrl);
 
-  try {
-    const ocrRes = await fetch("http://localhost:4000/ocr", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imageUrl }),
-    });
-
-    const parsedBet: any = await ocrRes.json();
-
-    if (!ocrRes.ok || (parsedBet && parsedBet.statusCode >= 400)) {
-      console.error("❌ OCR failed:", parsedBet);
-      return;
-    }
-
-    console.log("🧠 OCR Parsed Bet:", parsedBet);
-
-    // 💾 Save parsed bet to DB
-    const saveRes = await fetch("http://localhost:4000/bets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(parsedBet),
-    });
-
-    const saved: any = await saveRes.json();
-    console.log("💾 Saved bet to DB:", saved);
-
-    // 📨 Optional: reply in Discord
-    await message.reply(
-      `✅ Parsed bet saved:\n` +
-        `• **Event:** ${parsedBet.event}\n` +
-        `• **Market:** ${parsedBet.market}\n` +
-        `• **Odds:** ${parsedBet.odds}\n` +
-        `• **Stake:** $${parsedBet.stake}`
-    );
-  } catch (err) {
-    console.error("❌ Error in OCR + save flow:", err);
-  }
-}
-
-// 🟢 When bot starts
-client.once("clientReady", () => {
-  if (!client.user) {
-    console.error("❌ Client user not ready");
+  if (!text) {
+    await message.reply("❌ Couldn't read text from that image.");
     return;
   }
-  console.log(`🤖 Logged in as ${client.user.tag}`);
-});
 
-// 💬 Message handler
-client.on("messageCreate", async (message: Message) => {
+  await message.reply(`🧠 **Extracted Text:**\n\`\`\`${text.slice(0, 1900)}\`\`\``);
+}
+
+// 💬 Handle messages
+discord.on("messageCreate", async (message: Message) => {
   if (message.author.bot) return;
-
-  console.log(`📩 Message from ${message.author.username}: ${message.content}`);
-
-  // 1️⃣ Handle FanDuel links
-  if (message.content.includes("fanduel.com")) {
-    await handleFanDuelLink(message.content, message);
-  }
-
-  // 2️⃣ Handle all image uploads
   if (message.attachments.size > 0) {
     for (const attachment of message.attachments.values()) {
       await handleUploadedSlip(attachment.url, message);
@@ -107,5 +58,9 @@ client.on("messageCreate", async (message: Message) => {
   }
 });
 
-// 🚀 Start the bot
-client.login(process.env.DISCORD_TOKEN);
+// 🚀 Start bot
+discord.once("ready", () => {
+  console.log(`🤖 Logged in as ${discord.user?.tag}`);
+});
+
+discord.login(process.env.DISCORD_TOKEN);

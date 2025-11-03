@@ -1,0 +1,133 @@
+/src
+ ├── main.ts
+ ├── app.module.ts
+ │
+ ├── modules/
+ │   ├── bets/
+ │   │   ├── bets.controller.ts
+ │   │   ├── bets.service.ts
+ │   │   ├── bets.module.ts
+ │   │   ├── dto/
+ │   │   │   ├── create-bet.dto.ts
+ │   │   │   └── bet-response.dto.ts
+ │   │   ├── entities/
+ │   │   │   └── bet.entity.ts
+ │   │   └── match.service.ts
+ │   │
+ │   ├── ocr/
+ │   │   ├── ocr.service.ts
+ │   │   ├── ocr.module.ts
+ │   │   └── parsers/
+ │   │       ├── preprocess.ts
+ │   │       └── regex-parser.ts
+ │   │
+ │   ├── users/
+ │   │   ├── users.controller.ts
+ │   │   ├── users.service.ts
+ │   │   ├── users.module.ts
+ │   │   └── dto/
+ │   │       └── create-user.dto.ts
+ │   │
+ │   ├── auth/
+ │   │   ├── auth.module.ts
+ │   │   ├── auth.service.ts
+ │   │   └── strategies/
+ │   │       └── oauth.strategy.ts
+ │   │
+ │   └── common/
+ │       ├── prisma.service.ts
+ │       ├── logger.service.ts
+ │       ├── filters/
+ │       ├── interceptors/
+ │       └── decorators/
+ │
+ ├── queue/
+ │   ├── queue.module.ts
+ │   └── bet-ocr.processor.ts
+ │
+ └── config/
+     ├── env.ts
+     └── validation.ts
+
+
+
+🧠 The Core Idea
+You want to support multiple “entry points” for users to share bets — screenshots, shared links, or direct data from different sportsbooks (FanDuel, DraftKings, ESPN Bet, Bet365, Underdog, etc).
+Each of these entry points has a different format and requires different handling logic.
+
+🧩 Input Types (How Users Share)
+TypeExampleHow It’s SharedWhat You GetWhat You Need to Do1️⃣ Screenshot UploadImage from phone gallery or Discord uploadUser posts a .jpg/.pngImage URLRun OCR → extract text → parse event/stake/odds2️⃣ Share Link (Direct)“Share your bet” link from FanDuel/DraftKingsUser pastes link into Discord or your siteURLFetch page metadata or API → parse structured data3️⃣ Native Share → Your AppUser taps “Share” on sportsbook → chooses your appOS passes link or imageURL or image blobSame as above, just bypasses Discord4️⃣ Manual Entry (Fallback)User types event and odds manuallyForm inputStructured data alreadyJust validate and save5️⃣ API Integration (future)OAuth or authorized API from sportsbookDirectly from sportsbook APIFull structured bet dataNo OCR — just store and sync
+
+🏗️ Recommended Flow for Each Source
+🖼️ 1. Screenshots (like that DraftKings slip)
+
+Sent via Discord, uploaded manually, or shared from phone.
+
+These are unstructured → OCR is mandatory.
+
+Each book (FanDuel, DK, etc.) has unique visual layouts, so:
+You’ll want to train or tune OCR per platform.
+Use small regex “parsers” per sportsbook once text is extracted.
+➡️ Best pipeline:
+Discord Upload → OCR Service → BetParser (detect DK/FanDuel/etc.) → DB
+
+🔗 2. Shared Links
+These are gold — sportsbooks embed structured data in the link or its metadata.
+For example:
+DraftKings share URLs can include JSON payloads in the query string.
+FanDuel links resolve to pages with accessible metadata (you can scrape or call their public endpoints).
+
+➡️ Best pipeline:
+Discord / Web → URL Handler → BetParser (link-based) → DB
+This path doesn’t need OCR at all, just a fetch + parser for the sportsbook.
+
+📱 3. OS-Level Share
+If you make a web app or PWA, users could “share” from DraftKings → your domain (you’d register a share target in your app manifest).
+This is just another variant of the link or image upload, but it’s faster because it skips Discord entirely.
+➡️ Best pipeline:
+System Share → Web Route (/share) → Same logic as link/image handler
+
+🧾 4. Manual Entry
+For when OCR or link parsing fails — let users enter:
+Event nam
+Market
+Odds
+Stake
+Screenshot (optional)
+This is your fallback UX, and it’s essential because OCR will never be 100% perfect.
+➡️ Best pipeline:
+Form → /bets → DB
+
+🔌 5. Direct Integrations (future goal)
+This is long-term, but absolutely achievable:
+Once you have user OAuth, you could let them connect DraftKings or FanDuel accounts.
+Then your system can poll or subscribe to their bets directly — no screenshots or links needed
+➡️ Best pipeline:
+Sportsbook API → Your Backend → DB → Frontend
+
+⚙️ The Smart Way to Handle All of These
+You can abstract all inputs behind one entry point in your backend:
+POST /bets
+{
+  type: "image" | "link" | "manual",
+  source: "draftkings" | "fanduel" | "espn" | "underdog",
+  imageUrl?: string,
+  link?: string,
+  data?: { ...manual fields... }
+}
+Then your BetsService.create() decides:
+If type === "image" → run OCR
+If type === "link" → run link parser
+If type === "manual" → save directly
+Everything funnels into the same place — clean, consistent, and future-proof.
+
+🪄 Summary of Best Practices
+
+
+Keep your OCR isolated and generic.
+Keep book-specific parsing separate (each sportsbook gets its own small parser).
+Use a single /bets endpoint for all ingestion.
+Store raw text or raw data alongside parsed values for debugging/improvement.
+Include a fallback manual entry UI.
+Long-term: move toward link parsing and API access, away from OCR.
+If you’d like, I can sketch a flow diagram showing how all 5 input types merge into the same unified pipeline (from Discord/Share → backend → database → frontend). Would you want to see that next?

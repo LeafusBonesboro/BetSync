@@ -1,0 +1,34 @@
+/src
+ ├── espn/
+ │    ├── espn.controller.ts   ← routes
+ │    ├── espn.service.ts      ← logic (fetch, parse, persist)
+ │    └── espn.utils.ts        ← helpers (parseJSON, mapStats)
+ │
+ ├── prisma/
+ │    ├── prisma.service.ts
+ │    └── schema.prisma
+ │
+ ├── scripts/
+ │    └── syncAllPlayers.ts    ← CLI entry for daily sync
+ │
+ ├── frontend/
+ │    └── dashboard.tsx
+
+
+| Step | Layer        | What it does                              |
+| ---- | ------------ | ----------------------------------------- |
+| 1    | ESPN Service | Fetch & flatten ESPN JSON                 |
+| 2    | Prisma       | Save data (Player / Stat)                 |
+| 3    | Controller   | Expose REST routes to frontend            |
+| 4    | Next.js      | Display dashboard (teams, players, stats) |
+| 5    | (Optional)   | Add daily cron job + caching              |
+
+
+| Function                            | Purpose                                                |
+| ----------------------------------- | ------------------------------------------------------ |
+| `getScoreboard(year, week)`         | Fetch weekly games list                                |
+| `getBoxscore(eventId)`              | Fetch single game summary (team + player stats)        |
+| `getTeamRoster(teamId)`             | List all players on a team                             |
+| `getPlayerStats(playerId, season)`  | Get a single player’s season stats                     |
+| `syncAllPlayers(year)`              | Run through all teams and store all player stats in DB |
+| `getPlayerProps(eventId, playerId)` | (Later) Pull play-by-play and build quarter/prop data  |

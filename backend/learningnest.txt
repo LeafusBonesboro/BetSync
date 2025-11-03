@@ -1,0 +1,15 @@
+app.module.ts
+│
+├── bets/
+│   ├── bets.controller.ts   → Handles HTTP routes
+│   ├── bets.service.ts      → Core business logic
+│   ├── dto/                 → Data validation
+│   ├── bets.module.ts       → Declares the above
+│
+├── espn/
+│   ├── espn.controller.ts
+│   ├── espn.service.ts
+│   ├── espn.api.ts          → All HTTP calls to ESPN
+│   ├── player.repository.ts → Prisma interface
+│   ├── types.ts             → Shared interfaces
+│   ├── espn.module.ts

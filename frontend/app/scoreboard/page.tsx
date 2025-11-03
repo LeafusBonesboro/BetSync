@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link'; // 🟢 this fixes "Cannot find name 'Link'"
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 interface Game {
   id: string;
@@ -16,11 +17,22 @@ interface Game {
 }
 
 export default function ScoreboardPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // 👇 Initialize from URL (or defaults)
+  const [year, setYear] = useState<number>(() => Number(searchParams.get('year')) || 2025);
+  const [week, setWeek] = useState<number>(() => Number(searchParams.get('week')) || 8);
+
   const [games, setGames] = useState<Game[]>([]);
-  const [year, setYear] = useState(2025);
-  const [week, setWeek] = useState(8);
   const [loading, setLoading] = useState(true);
 
+  // 🔁 Keep URL in sync when year/week changes (so Back works)
+  useEffect(() => {
+    router.replace(`/scoreboard?year=${year}&week=${week}`);
+  }, [year, week, router]);
+
+  // 📡 Fetch games whenever year/week changes
   useEffect(() => {
     setLoading(true);
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/espn/scoreboard?year=${year}&week=${week}`)
@@ -34,20 +46,40 @@ export default function ScoreboardPage() {
         setLoading(false);
       });
   }, [year, week]);
-return (
-  <div className="max-w-6xl mx-auto p-6 text-white">
-    <h1 className="text-3xl font-bold text-amber-400 mb-6">NFL Scoreboard</h1>
-    {loading ? (
-      <p>Loading games...</p>
-    ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {games.map((game) => {
-          const home = game.home;
-          const away = game.away;
-          const homeScore = game.homeScore ?? null;
-          const awayScore = game.awayScore ?? null;
 
-          return (
+  return (
+    <div className="max-w-6xl mx-auto p-6 text-white">
+      <h1 className="text-3xl font-bold text-amber-400 mb-6">NFL Scoreboard</h1>
+
+      {/* --- Filters --- */}
+      <div className="flex gap-4 mb-6">
+        <select
+          value={year}
+          onChange={(e) => setYear(Number(e.target.value))}
+          className="bg-gray-800 text-white px-3 py-2 rounded"
+        >
+          {[2023, 2024, 2025].map((y) => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
+
+        <select
+          value={week}
+          onChange={(e) => setWeek(Number(e.target.value))}
+          className="bg-gray-800 text-white px-3 py-2 rounded"
+        >
+          {Array.from({ length: 18 }, (_, i) => i + 1).map((w) => (
+            <option key={w} value={w}>Week {w}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* --- Games --- */}
+      {loading ? (
+        <p>Loading games...</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {games.map((game) => (
             <div
               key={game.id}
               className="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-md hover:shadow-amber-500/20 transition"
@@ -58,33 +90,33 @@ return (
                   {new Date(game.date).toLocaleString()}
                 </p>
               </div>
+
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-gray-300">
-                    {away}{' '}
-                    {awayScore && (
-                      <span className="text-amber-400 font-semibold">{awayScore}</span>
+                    {game.away}{' '}
+                    {game.awayScore && (
+                      <span className="text-amber-400 font-semibold">{game.awayScore}</span>
                     )}
                   </p>
                   <p className="text-gray-300">
-                    {home}{' '}
-                    {homeScore && (
-                      <span className="text-amber-400 font-semibold">{homeScore}</span>
+                    {game.home}{' '}
+                    {game.homeScore && (
+                      <span className="text-amber-400 font-semibold">{game.homeScore}</span>
                     )}
                   </p>
                 </div>
                 <Link
-                  href={`/boxscore/${game.id}`}
+                  href={`/boxscore/${game.id}?year=${year}&week=${week}`}
                   className="text-amber-400 font-semibold hover:underline self-center"
                 >
                   View Boxscore →
                 </Link>
               </div>
             </div>
-          );
-        })}
-      </div>
-    )}
-  </div>
-);
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }

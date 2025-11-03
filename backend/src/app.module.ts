@@ -5,6 +5,7 @@ import { EspnModule } from './espn/espn.module';
 import { AnalysisModule } from './analysis/analysis.module';
 import { OcrModule } from './ocr/ocr.module'; // ✅ Add this line
 
+
 @Module({
   imports: [
     PrismaModule,
@@ -12,6 +13,7 @@ import { OcrModule } from './ocr/ocr.module'; // ✅ Add this line
     BetsModule,
     AnalysisModule,
     OcrModule, // ✅ Add this to the imports
-  ],
+  ]
+  
 })
 export class AppModule {}
