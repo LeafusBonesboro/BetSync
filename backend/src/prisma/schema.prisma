@@ -15,11 +15,12 @@ model Bet {
   odds      Int
   status    String   @default("Pending")
   createdAt DateTime @default(now())
-
-  imageUrl  String?   // for the Discord image
-  link      String? 
-  eventId   String?     // 🆕 add this line
+  imageUrl  String?
+  link      String?
+  eventId   String?
+  rawText   String?   // 🆕 add this
 }
+
 
 model ExpertAnalysis {
   id           Int      @id @default(autoincrement())

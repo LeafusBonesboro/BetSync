@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import LoadBets from '@/components/LoadBets'; // <- path to your enhanced LoadBets file
+import LoadBets from '@/components/LoadBets'; // <- your LoadBets component
 
 interface BoxscoreResponse {
   id: string;
@@ -15,7 +15,6 @@ export default function BoxscorePage() {
   const { id } = useParams();
   const [data, setData] = useState<BoxscoreResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sportsbookOdds, setSportsbookOdds] = useState<any[]>([]);
 
   // Fetch ESPN Boxscore
   useEffect(() => {
@@ -34,15 +33,6 @@ export default function BoxscorePage() {
     fetchData();
   }, [id]);
 
-  // Fetch Sportsbook Odds
-  useEffect(() => {
-    if (!id) return;
-    fetch(`/api/odds/game/${id}`)
-      .then((res) => res.json())
-      .then(setSportsbookOdds)
-      .catch(() => setSportsbookOdds([]));
-  }, [id]);
-
   if (loading) return <p className="p-6 text-gray-400">Loading boxscore...</p>;
   if (!data) return <p className="p-6 text-gray-400">No boxscore found.</p>;
 
@@ -57,34 +47,13 @@ export default function BoxscorePage() {
       <div className="sticky top-0 z-20 bg-black border-b border-gray-800 flex gap-6 px-6 py-3 text-sm text-gray-400 backdrop-blur-sm">
         <a href="#team-stats" className="hover:text-amber-400">Team Stats</a>
         <a href="#player-stats" className="hover:text-amber-400">Player Stats</a>
-        <a href="#sportsbook" className="hover:text-amber-400">Sportsbook Odds</a>
         <a href="#my-bets" className="hover:text-amber-400">My Bets</a>
       </div>
 
       {/* Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-        {/* LEFT: Sportsbook Odds */}
-        <div id="sportsbook" className="space-y-6 order-2 lg:order-1">
-          <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-            <h3 className="text-xl font-semibold text-amber-400 mb-3">Sportsbook Odds</h3>
-            {sportsbookOdds.length > 0 ? (
-              sportsbookOdds.map((book, i) => (
-                <div key={i} className="bg-gray-950 p-3 rounded-lg mb-3">
-                  <p className="font-semibold text-gray-200">{book.bookName}</p>
-                  <p className="text-sm text-gray-400">
-                    {book.awayTeam}: {book.awayOdds} | {book.homeTeam}: {book.homeOdds}
-                  </p>
-                  {book.total && <p className="text-sm text-gray-400">Total: {book.total}</p>}
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-sm">Odds not available yet.</p>
-            )}
-          </div>
-        </div>
-
         {/* CENTER: Game Info + Boxscore + Player Stats */}
-        <div className="order-1 lg:order-2 space-y-10">
+        <div className="order-1 lg:order-2 space-y-10 lg:col-span-2">
           <div>
             <h1 className="text-3xl font-bold text-amber-400 mb-4">
               {away?.team?.displayName} @ {home?.team?.displayName}
@@ -145,113 +114,110 @@ export default function BoxscorePage() {
             </div>
           )}
 
-          {/* 🧍 Player Leaders (Headline) */}
-{leaders && leaders.length > 0 && (
-  <div id="player-stats" className="mt-10">
-    <h2 className="text-xl font-semibold mb-4 text-amber-300">Player Leaders</h2>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {leaders.map((group: any, i: number) => {
-        const category = group.displayName || group.name || `Category ${i}`;
-        return (
-          <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <h3 className="text-amber-400 font-semibold text-lg mb-4">{category}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {group.leaders.map((l: any, j: number) => (
-                <div key={j}>
-                  <p className="text-gray-200 font-semibold">
-                    {l.athlete?.displayName ?? 'N/A'}
-                  </p>
-                  <p className="text-gray-400 text-sm">{l.team?.displayName ?? ''}</p>
-                  {Array.isArray(l.statistics) && l.statistics.length > 0 && (
-                    <p className="text-gray-300 mt-1">
-                      {l.statistics.map((s: any, k: number) => (
-                        <span key={k}>
-                          {s.displayValue}
-                          {k < l.statistics.length - 1 && ' • '}
-                        </span>
-                      ))}
-                    </p>
-                  )}
+          {/* 🧍 Player Leaders */}
+          {leaders && leaders.length > 0 && (
+            <div id="player-stats" className="mt-10">
+              <h2 className="text-xl font-semibold mb-4 text-amber-300">Player Leaders</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {leaders.map((group: any, i: number) => {
+                  const category = group.displayName || group.name || `Category ${i}`;
+                  return (
+                    <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                      <h3 className="text-amber-400 font-semibold text-lg mb-4">{category}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {group.leaders.map((l: any, j: number) => (
+                          <div key={j}>
+                            <p className="text-gray-200 font-semibold">
+                              {l.athlete?.displayName ?? 'N/A'}
+                            </p>
+                            <p className="text-gray-400 text-sm">{l.team?.displayName ?? ''}</p>
+                            {Array.isArray(l.statistics) && l.statistics.length > 0 && (
+                              <p className="text-gray-300 mt-1">
+                                {l.statistics.map((s: any, k: number) => (
+                                  <span key={k}>
+                                    {s.displayValue}
+                                    {k < l.statistics.length - 1 && ' • '}
+                                  </span>
+                                ))}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Player Stats Detail */}
+          {boxscore?.players && boxscore.players.length > 0 && (
+            <div className="mt-12">
+              <h2 className="text-xl font-semibold mb-4 text-amber-300">Detailed Player Stats</h2>
+
+              {boxscore.players.map((team: any, tIdx: number) => (
+                <div key={tIdx} className="mb-8">
+                  <h3 className="text-lg text-amber-400 font-bold mb-3">
+                    {team.team.displayName}
+                  </h3>
+
+                  {team.statistics.map((group: any, gIdx: number) => (
+                    <div key={gIdx} className="mb-6">
+                      <h4 className="text-md text-gray-300 font-semibold mb-2">
+                        {group.displayName}
+                      </h4>
+
+                      <table className="w-full border-collapse text-sm">
+                        <thead className="bg-gray-800">
+                          <tr>
+                            <th className="text-left px-3 py-2 border-b border-gray-700 text-gray-400">
+                              Player
+                            </th>
+                            {group.labels.map((label: string, i: number) => (
+                              <th
+                                key={i}
+                                className="text-right px-3 py-2 border-b border-gray-700 text-gray-400"
+                              >
+                                {label}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {group.athletes.map((athlete: any, i: number) => (
+                            <tr
+                              key={i}
+                              className={i % 2 === 0 ? 'bg-gray-950' : 'bg-gray-900'}
+                            >
+                              <td className="px-3 py-2 border-b border-gray-800 text-gray-200 font-medium">
+                                {athlete.athlete?.displayName ?? '—'}
+                                {athlete.athlete?.position?.abbreviation && (
+                                  <span className="text-gray-500 text-xs ml-1">
+                                    ({athlete.athlete.position.abbreviation})
+                                  </span>
+                                )}
+                              </td>
+
+                              {athlete.stats.map((stat: string, j: number) => (
+                                <td
+                                  key={j}
+                                  className="text-right px-3 py-2 border-b border-gray-800 text-gray-200"
+                                >
+                                  {stat || '—'}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
-          </div>
-        );
-      })}
-    </div>
-  </div>
-)}
-
-{boxscore?.players && boxscore.players.length > 0 && (
-  <div className="mt-12">
-    <h2 className="text-xl font-semibold mb-4 text-amber-300">Detailed Player Stats</h2>
-
-    {boxscore.players.map((team: any, tIdx: number) => (
-      <div key={tIdx} className="mb-8">
-        <h3 className="text-lg text-amber-400 font-bold mb-3">
-          {team.team.displayName}
-        </h3>
-
-        {team.statistics.map((group: any, gIdx: number) => (
-          <div key={gIdx} className="mb-6">
-            <h4 className="text-md text-gray-300 font-semibold mb-2">
-              {group.displayName}
-            </h4>
-
-            <table className="w-full border-collapse text-sm">
-              <thead className="bg-gray-800">
-                <tr>
-                  <th className="text-left px-3 py-2 border-b border-gray-700 text-gray-400">
-                    Player
-                  </th>
-                  {group.labels.map((label: string, i: number) => (
-                    <th
-                      key={i}
-                      className="text-right px-3 py-2 border-b border-gray-700 text-gray-400"
-                    >
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              <tbody>
-                {group.athletes.map((athlete: any, i: number) => (
-                  <tr
-                    key={i}
-                    className={i % 2 === 0 ? 'bg-gray-950' : 'bg-gray-900'}
-                  >
-                    {/* Player name + position */}
-                    <td className="px-3 py-2 border-b border-gray-800 text-gray-200 font-medium">
-                      {athlete.athlete?.displayName ?? '—'}
-                      {athlete.athlete?.position?.abbreviation && (
-                        <span className="text-gray-500 text-xs ml-1">
-                          ({athlete.athlete.position.abbreviation})
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Stats */}
-                    {athlete.stats.map((stat: string, j: number) => (
-                      <td
-                        key={j}
-                        className="text-right px-3 py-2 border-b border-gray-800 text-gray-200"
-                      >
-                        {stat || '—'}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
-      </div>
-    ))}
-  </div>
-)}
-
-
+          )}
         </div>
 
         {/* RIGHT: My Bets */}

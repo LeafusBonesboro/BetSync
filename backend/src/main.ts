@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv';
+dotenv.config(); // 👈 This loads .env before anything else
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
@@ -15,9 +18,9 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT || 4000;
- await app.listen(process.env.PORT || 4000, '0.0.0.0');
-console.log(`🚀 Backend running on http://localhost:${process.env.PORT || 4000}`);
-
+  await app.listen(port, '0.0.0.0');
+  console.log(`🚀 Backend running on http://localhost:${port}`);
+  console.log('✅ Loaded API_URL:', process.env.API_URL); // 👈 debug log
 }
 
 bootstrap();

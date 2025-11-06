@@ -13,10 +13,10 @@ export default function TopBar() {
       {/* Navigation Links */}
       <div className="flex gap-6">
         <Link href="/" className="hover:text-amber-400 transition">
-          Bets
+          Home
         </Link>
-        <Link href="/dashboard" className="hover:text-amber-400 transition">
-          Dashboard
+        <Link href="/bets" className="hover:text-amber-400 transition">
+          Bets
         </Link>
         <Link href="/research" className="hover:text-amber-400 transition">
           Research
