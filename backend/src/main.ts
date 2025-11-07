@@ -11,6 +11,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',               // local dev
       'https://bet-sync-vuzf.vercel.app',    // vercel prod
+      'https://bet-sync-beige.vercel.app', // your deployed frontend
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
