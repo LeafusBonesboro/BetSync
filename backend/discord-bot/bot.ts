@@ -6,11 +6,25 @@ import vision from "@google-cloud/vision";
 
 dotenv.config();
 
-// 🧠 Google Vision Client
-const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || "{}");
+// ✅ Load Google Vision credentials
+let credentials: any = {};
+try {
+  credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || "{}");
+
+  // 🔧 Fix for private_key newline issue
+  if (credentials.private_key) {
+    credentials.private_key = credentials.private_key.replace(/\\n/g, "\n");
+  }
+
+  console.log("✅ Loaded Vision credentials for:", credentials.client_email);
+} catch (err) {
+  console.error("❌ Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON:", err);
+}
+
+// 🧠 Initialize Google Vision Client
 const visionClient = new vision.ImageAnnotatorClient({ credentials });
 
-// 🤖 Discord Client
+// 🤖 Initialize Discord Client
 const discord = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -36,11 +50,13 @@ async function sendParsedBetToBackend(parsedBet: any) {
   }
 }
 
-// 🧠 OCR function
+// 🧠 Extract text from image using Google Vision
 async function extractTextFromImage(imageUrl: string) {
   try {
     const [result] = await visionClient.textDetection(imageUrl);
-    return result.textAnnotations?.[0]?.description || "";
+    const text = result.textAnnotations?.[0]?.description || "";
+    console.log("🧠 OCR Extracted Text (first 200 chars):", text.slice(0, 200));
+    return text;
   } catch (err) {
     console.error("❌ Vision error:", err);
     return "";
@@ -72,6 +88,7 @@ function extractOdds(text: string): number {
 async function handleUploadedSlip(imageUrl: string, message: Message) {
   console.log(`🖼️ Image uploaded: ${imageUrl}`);
   const text = await extractTextFromImage(imageUrl);
+
   if (!text) {
     await message.reply("❌ Couldn't read text from that image.");
     return;
