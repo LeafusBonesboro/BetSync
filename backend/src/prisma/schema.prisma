@@ -18,19 +18,18 @@ model Bet {
   imageUrl  String?
   link      String?
   eventId   String?
-  rawText   String?   // 🆕 add this
+  rawText   String?
 }
 
-
 model ExpertAnalysis {
-  id           Int      @id @default(autoincrement())
-  expertName   String
-  title        String?
-  summary      String?
-  transcript   String    // markdown text
-  parsedData   Json      // predictions, insights, structured info
-  filePath     String?
-  createdAt    DateTime  @default(now())
+  id         Int      @id @default(autoincrement())
+  expertName String
+  createdAt  DateTime @default(now())
+  filePath   String?
+  parsedData Json
+  summary    String?
+  title      String?
+  transcript String
 }
 
 model Player {
@@ -39,14 +38,13 @@ model Player {
   fullName  String
   position  String?
   team      String?
-  stats     Stat[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  stats     Stat[]
 }
 
 model Stat {
   id        Int      @id @default(autoincrement())
-  player    Player   @relation(fields: [playerId], references: [id])
   playerId  Int
   season    Int
   category  String
@@ -54,6 +52,7 @@ model Stat {
   label     String?
   value     Float
   createdAt DateTime @default(now())
+  player    Player   @relation(fields: [playerId], references: [id])
 
-  @@unique([playerId, season, name]) // avoid duplicate stats
+  @@unique([playerId, season, name])
 }
