@@ -1,7 +1,9 @@
 {
   "name": "betsync",
   "private": true,
-  "workspaces": ["backend", "frontend"],
+  "workspaces": [
+    "backend"
+  ],
   "scripts": {
     "dev": "npm run dev:frontend",
     "dev:frontend": "npm --prefix frontend run dev",
@@ -13,5 +15,9 @@
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"
+  },
+  "dependencies": {
+    "discord.js": "^14.24.2",
+    "dotenv": "^17.2.3"
   }
 }
