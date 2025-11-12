@@ -1,0 +1,6 @@
+backend/
+discord-bot/
+.git/
+.gitignore
+*.md
+node_modules/
