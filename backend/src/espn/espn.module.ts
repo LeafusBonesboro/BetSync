@@ -8,5 +8,6 @@ import { PrismaService } from '../prisma/prisma.service';
   imports: [HttpModule],
   controllers: [EspnController],
   providers: [EspnService, PrismaService],
+  exports: [EspnService], // ✅ <-- add this
 })
 export class EspnModule {}

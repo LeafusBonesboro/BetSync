@@ -19,6 +19,9 @@ model Bet {
   link      String?
   eventId   String?
   rawText   String?
+
+  // 👇 Add this line
+  props BetProp[] // A bet can have multiple props
 }
 
 model ExpertAnalysis {
@@ -55,4 +58,42 @@ model Stat {
   player    Player   @relation(fields: [playerId], references: [id])
 
   @@unique([playerId, season, name])
+}
+
+model NbaGame {
+  id            Int      @id @default(autoincrement())
+  espnId        String   @unique
+  homeTeam      String
+  awayTeam      String
+  homeAbbr      String?
+  awayAbbr      String?
+  homeLogo      String?
+  awayLogo      String?
+  homeScore     Int?
+  awayScore     Int?
+  status        String?
+  startTime     DateTime
+  spread        Float?
+  total         Float?
+  moneylineHome Int?
+  moneylineAway Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model BetProp {
+  id          Int      @id @default(autoincrement())
+  betId       Int
+  playerName  String
+  description String
+  line        Float?
+  outcome     String? // Pending | Hit | Miss
+  currentStat Float?
+  sheetRow    Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bet Bet @relation(fields: [betId], references: [id])
+
+  @@unique([betId, description]) // prevent duplicate props for same bet
 }

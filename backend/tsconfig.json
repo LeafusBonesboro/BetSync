@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "resolvePackageJsonExports": true,
+    "module": "commonjs",
+    "target": "ES2023",
+    "moduleResolution": "node",
+    "rootDir": "./src",
+    "outDir": "./dist",
     "useUnknownInCatchVariables": false,
 
-    "target": "ES2023",
-    "outDir": "./dist",
     "baseUrl": "./",
     "sourceMap": true,
     "incremental": true,
@@ -20,9 +20,9 @@
 
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "isolatedModules": true,
 
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
-  }
+  },
+  "include": ["src"]
 }
