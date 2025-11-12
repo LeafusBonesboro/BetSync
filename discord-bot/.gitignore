@@ -1,0 +1,48 @@
+# Node modules and build artifacts
+node_modules/
+dist/
+build/
+coverage/
+*.log
+
+# Environment files (secrets)
+.env
+.env.local
+.env.development.local
+.env.production.local
+.env.test.local
+
+# Local credentials or keys
+*.key
+*.pem
+*.p12
+*.crt
+*.csr
+*.der
+*.jks
+*.pfx
+*.p8
+*.json
+secrets/
+keys/
+credentials/
+
+# Temporary or debug files
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+*.swp
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.code-workspace
+
+# TypeScript
+*.tsbuildinfo
+
+# Optional lockfile ignore (if using shared monorepo dependency management)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
