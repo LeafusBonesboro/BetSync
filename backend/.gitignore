@@ -62,8 +62,8 @@ prisma/dev.db
 prisma/dev.db-journal
 /tmp
 
-*.tsbuildinfo
-
+*.tsbuildinfo/
+tsconfig.build.json/
 
 backend/config/vision-api-key.json
-tsconfig.build.tsbuildinfo
+tsconfig.build.tsbuildinfo/
