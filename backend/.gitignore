@@ -66,3 +66,4 @@ prisma/dev.db-journal
 
 
 backend/config/vision-api-key.json
+tsconfig.build.tsbuildinfo

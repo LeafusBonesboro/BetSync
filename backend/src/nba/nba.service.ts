@@ -8,7 +8,8 @@ export class NbaService {
   constructor(private readonly prisma: PrismaService) {}
 
   async fetchAndStoreGames(date?: string) {
-    const fetch = (await import('node-fetch')).default;
+    // 🚀 Use native fetch (Node 18+)
+    // No import needed, works in CJS & ESM
 
     // ESPN expects YYYYMMDD format
     const formattedDate = date
@@ -36,7 +37,6 @@ export class NbaService {
         PHX: 'phx',
         UTA: 'uta',
         OKC: 'okc',
-        // Add others if ESPN ever changes abbreviations
       };
       return map[abbr] || abbr.toLowerCase();
     };
@@ -50,7 +50,7 @@ export class NbaService {
       const homeAbbr = home?.team?.abbreviation ?? null;
       const awayAbbr = away?.team?.abbreviation ?? null;
 
-      // 🏀 ESPN static logo URLs
+      // ESPN static logo URLs
       const homeLogo = homeAbbr
         ? `https://a.espncdn.com/i/teamlogos/nba/500/${fixAbbr(homeAbbr)}.png`
         : 'https://a.espncdn.com/i/teamlogos/nba/500/nba.png';
@@ -82,7 +82,7 @@ export class NbaService {
       };
     });
 
-    // 🧠 Upsert each game into Prisma
+    // Save to DB
     for (const g of games) {
       try {
         await this.prisma.nbaGame.upsert({

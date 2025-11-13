@@ -27,7 +27,7 @@ export default function TopBar() {
         <Link href="/espn-data" className="hover:text-amber-400 transition">
           Data
         </Link>
-        <Link href="/nba" className="hover:text-amber-400 transition">
+        <Link href="/events" className="hover:text-amber-400 transition">
           NBA
         </Link>
       </div>
