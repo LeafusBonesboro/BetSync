@@ -11,10 +11,18 @@ export class AuthService {
     private jwt: JwtService
   ) {}
 
+  private getRedirectUri() {
+    return process.env.NODE_ENV === "production"
+      ? process.env.DISCORD_REDIRECT_URI_PROD
+      : process.env.DISCORD_REDIRECT_URI;
+  }
+
   redirectToDiscord(res: Response) {
+    const redirectUri = this.getRedirectUri();
+
     const params = new URLSearchParams({
       client_id: process.env.DISCORD_CLIENT_ID!,
-      redirect_uri: process.env.DISCORD_REDIRECT_URI!,
+      redirect_uri: redirectUri!,
       response_type: "code",
       scope: "identify email"
     });
@@ -23,6 +31,8 @@ export class AuthService {
   }
 
   async handleDiscordCallback(code: string, res: Response) {
+    const redirectUri = this.getRedirectUri();
+
     // Exchange code for token
     const tokenRes = await axios.post(
       "https://discord.com/api/oauth2/token",
@@ -31,21 +41,21 @@ export class AuthService {
         client_secret: process.env.DISCORD_CLIENT_SECRET!,
         grant_type: "authorization_code",
         code,
-        redirect_uri: process.env.DISCORD_REDIRECT_URI!
+        redirect_uri: redirectUri!
       }),
       { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );
 
     const accessToken = tokenRes.data.access_token;
 
-    // Fetch Discord user
+    // Fetch Discord user info
     const discordUser = await axios.get("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
 
     const { id, username, avatar } = discordUser.data;
 
-    // Prisma user
+    // Upsert user
     const user = await this.prisma.user.upsert({
       where: { discordId: id },
       update: {
@@ -67,11 +77,11 @@ export class AuthService {
     res.cookie("token", jwtToken, {
       httpOnly: true,
       sameSite: "lax",
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Redirect home logged in
+    // Redirect home
     return res.redirect(process.env.FRONTEND_URL!);
   }
 
@@ -92,9 +102,8 @@ export class AuthService {
   }
 
   async findByDiscordId(discordId: string) {
-  return this.prisma.user.findUnique({
-    where: { discordId },
-  });
-}
-
+    return this.prisma.user.findUnique({
+      where: { discordId },
+    });
+  }
 }
