@@ -14,7 +14,8 @@ async function bootstrap() {
 
   // CORS for cookies
   app.enableCors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000",
+    "https://bet-sync-beige.vercel.app",],
     credentials: true,
   });
 
