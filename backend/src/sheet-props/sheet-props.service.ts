@@ -41,20 +41,22 @@ export class SheetPropsService {
   }
 
   const bet = await this.prisma.bet.upsert({
-    where: { id: betId },
-    update: {
-      odds: Number(odds) || 0,
-      event: game || 'Unknown',
-      market: 'Parlay',
-    },
-    create: {
-      id: betId,
-      event: game || 'Unknown',
-      market: 'Parlay',
-      stake: 0,
-      odds: Number(odds) || 0,
-    },
-  });
+  where: { id: betId },
+  update: {
+    odds: Number(odds) || 0,
+    event: game || 'Unknown',
+    market: 'Parlay',
+  },
+  create: {
+    id: betId,
+    event: game || 'Unknown',
+    market: 'Parlay',
+    stake: 0,
+    odds: Number(odds) || 0,
+    userId: 'system', // ★ REQUIRED FIX
+  },
+});
+
 
   await this.prisma.betProp.upsert({
     where: { betId_description: { betId: bet.id, description } },

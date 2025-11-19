@@ -1,5 +1,4 @@
-"use client";
-import { useEffect, useState } from "react";
+import React from "react";
 
 interface Bet {
   id: number;
@@ -10,43 +9,38 @@ interface Bet {
   status: string;
   imageUrl?: string;
   link?: string;
+  rawText?: string;
   createdAt: string;
 }
 
-export default function BetsList() {
-  const [bets, setBets] = useState<Bet[]>([]);
+interface BetsListProps {
+  bets: Bet[];
+}
 
-  useEffect(() => {
-    const fetchBets = async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bets`);
-      const data = await res.json();
-      setBets(data);
-    };
-    fetchBets();
-  }, []);
+export default function BetsList({ bets }: BetsListProps) {
+  if (!bets || bets.length === 0) {
+    return (
+      <p className="text-white p-6 text-center">
+        You have no bets yet.
+      </p>
+    );
+  }
 
   return (
     <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {bets.map((bet) => (
-        <div key={bet.id} className="border rounded-xl p-4 shadow bg-white">
+        <div
+          key={bet.id}
+          className="border rounded-xl p-4 shadow bg-white"
+        >
           <h2 className="text-xl font-semibold">{bet.event}</h2>
           <p>{bet.market}</p>
-          <p className="text-gray-600">Stake: ${bet.stake}</p>
-          <p className="text-gray-600">Odds: {bet.odds}</p>
-          <p className="font-semibold text-blue-600">{bet.status}</p>
-          {bet.imageUrl && (
-            <img src={bet.imageUrl} alt="Bet slip" className="mt-2 rounded-lg w-full" />
-          )}
-          {bet.link && (
-            <a
-              href={bet.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-gray-500 underline block mt-2"
-            >
-              View on Discord
-            </a>
-          )}
+          <p className="text-sm text-gray-600 mt-2">
+            Stake: ${bet.stake} | Odds: {bet.odds}
+          </p>
+          <p className="text-xs text-gray-400 mt-2">
+            Status: {bet.status}
+          </p>
         </div>
       ))}
     </div>

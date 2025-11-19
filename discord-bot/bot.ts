@@ -6,12 +6,13 @@ import vision from "@google-cloud/vision";
 
 dotenv.config();
 
-// ✅ Load Google Vision credentials
+/* ------------------------------------------------------
+   GOOGLE VISION CREDENTIALS
+------------------------------------------------------ */
 let credentials: any = {};
 try {
   credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || "{}");
 
-  // 🔧 Fix for private_key newline issue
   if (credentials.private_key) {
     credentials.private_key = credentials.private_key.replace(/\\n/g, "\n");
   }
@@ -21,10 +22,14 @@ try {
   console.error("❌ Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON:", err);
 }
 
-// 🧠 Initialize Google Vision Client
+/* ------------------------------------------------------
+   GOOGLE VISION CLIENT
+------------------------------------------------------ */
 const visionClient = new vision.ImageAnnotatorClient({ credentials });
 
-// 🤖 Initialize Discord Client
+/* ------------------------------------------------------
+   DISCORD CLIENT
+------------------------------------------------------ */
 const discord = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -33,37 +38,46 @@ const discord = new Client({
   ],
 });
 
-// 📡 Send parsed bet to backend
+/* ------------------------------------------------------
+   SEND BET TO BACKEND WITH USER
+------------------------------------------------------ */
 async function sendParsedBetToBackend(parsedBet: any) {
-  const apiUrl = process.env.API_URL || "http://localhost:4000/bets";
+  const apiUrl = process.env.API_URL || "http://localhost:4000/bets/from-discord";
 
-  const response = await fetch(apiUrl, {
+  console.log("📤 Sending bet:", parsedBet); // DEBUG
+
+  const res = await fetch(apiUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(parsedBet),
   });
 
-  if (!response.ok) {
-    console.error("❌ Failed to send bet to backend:", await response.text());
+  if (!res.ok) {
+    console.error("❌ Backend error:", await res.text());
   } else {
     console.log("✅ Bet sent to backend successfully!");
   }
 }
 
-// 🧠 Extract text from image using Google Vision
+/* ------------------------------------------------------
+   OCR
+------------------------------------------------------ */
 async function extractTextFromImage(imageUrl: string) {
   try {
     const [result] = await visionClient.textDetection(imageUrl);
     const text = result.textAnnotations?.[0]?.description || "";
+
     console.log("🧠 OCR Extracted Text (first 200 chars):", text.slice(0, 200));
     return text;
   } catch (err) {
-    console.error("❌ Vision error:", err);
+    console.error("❌ Vision API error:", err);
     return "";
   }
 }
 
-// 🧩 Parsing helpers
+/* ------------------------------------------------------
+   PARSER
+------------------------------------------------------ */
 function extractEventName(text: string): string {
   const line = text.split("\n").find((l) => /vs|@/i.test(l));
   return line || "Unknown Event";
@@ -84,13 +98,15 @@ function extractOdds(text: string): number {
   return match ? parseInt(match[1]) : 0;
 }
 
-// 🖼️ Handle uploaded images
+/* ------------------------------------------------------
+   HANDLE UPLOADED SLIP (MAIN LOGIC)
+------------------------------------------------------ */
 async function handleUploadedSlip(imageUrl: string, message: Message) {
   console.log(`🖼️ Image uploaded: ${imageUrl}`);
-  const text = await extractTextFromImage(imageUrl);
 
+  const text = await extractTextFromImage(imageUrl);
   if (!text) {
-    await message.reply("❌ Couldn't read text from that image.");
+    await message.reply("❌ Couldn't read text from the image.");
     return;
   }
 
@@ -103,15 +119,24 @@ async function handleUploadedSlip(imageUrl: string, message: Message) {
     imageUrl,
     link: message.url,
     rawText: text,
+    discordId: message.author.id, // ⭐ ALWAYS ATTACH THE USER ID
   };
 
+  console.log("📤 Sending bet with discordId:", message.author.id);
+
   await sendParsedBetToBackend(parsedBet);
-  await message.reply(`✅ Bet saved: **${parsedBet.event}** (${parsedBet.market})`);
+
+  await message.reply(
+    `✅ Bet saved for **${message.author.username}**: **${parsedBet.event}** (${parsedBet.market})`
+  );
 }
 
-// 💬 Handle messages
+/* ------------------------------------------------------
+   LISTEN FOR DISCORD MESSAGES
+------------------------------------------------------ */
 discord.on("messageCreate", async (message: Message) => {
   if (message.author.bot) return;
+
   if (message.attachments.size > 0) {
     for (const attachment of message.attachments.values()) {
       await handleUploadedSlip(attachment.url, message);
@@ -119,9 +144,14 @@ discord.on("messageCreate", async (message: Message) => {
   }
 });
 
-// 🚀 Start bot
+/* ------------------------------------------------------
+   CORRECT READY EVENT (YOU HAD THIS BROKEN!)
+------------------------------------------------------ */
 discord.once("ready", () => {
   console.log(`🤖 Logged in as ${discord.user?.tag}`);
 });
 
+/* ------------------------------------------------------
+   LOGIN
+------------------------------------------------------ */
 discord.login(process.env.DISCORD_TOKEN);

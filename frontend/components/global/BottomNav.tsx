@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Home, DollarSign, Users, CalendarDays, Star, Wallet } from 'lucide-react';
 
 const navItems = [
-  { name: 'Home', href: '/', icon: Home },
+  { name: 'Home', href: '/dashboard', icon: Home },
   { name: 'Offers', href: '/offers', icon: DollarSign },
   { name: 'Following', href: '/following', icon: Users },
   { name: 'Events', href: '/events', icon: CalendarDays },

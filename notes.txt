@@ -131,3 +131,17 @@ Store raw text or raw data alongside parsed values for debugging/improvement.
 Include a fallback manual entry UI.
 Long-term: move toward link parsing and API access, away from OCR.
 If you’d like, I can sketch a flow diagram showing how all 5 input types merge into the same unified pipeline (from Discord/Share → backend → database → frontend). Would you want to see that next?
+
+
+
+🚀 1. Finish authentication & user session flow
+📊 2. Clean dashboard showing real saved bets
+🔎 3. Bet detail pages
+🤖 4. Finish bot → backend user linking
+📱 5. Add mobile-friendly UI
+💳 6. Add Stripe for subscriptions
+🐳 7. Optional: deploy to production (Railway / Vercel)
+
+You are maybe 2–4 weeks from an MVP you can actually show to the world.
+
+If you'd like, I’ll create a full shipping roadmap for you.

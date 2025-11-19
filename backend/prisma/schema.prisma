@@ -20,8 +20,11 @@ model Bet {
   eventId   String?
   rawText   String?
 
-  // 👇 Add this line
-  props BetProp[] // A bet can have multiple props
+  // Relation → User
+  userId String?
+  user   User? @relation(fields: [userId], references: [id])
+
+  props BetProp[]
 }
 
 model ExpertAnalysis {
@@ -87,7 +90,7 @@ model BetProp {
   playerName  String
   description String
   line        Float?
-  outcome     String? // Pending | Hit | Miss
+  outcome     String?
   currentStat Float?
   sheetRow    Int?
   createdAt   DateTime @default(now())
@@ -95,5 +98,19 @@ model BetProp {
 
   bet Bet @relation(fields: [betId], references: [id])
 
-  @@unique([betId, description]) // prevent duplicate props for same bet
+  @@unique([betId, description])
+}
+
+model User {
+  id             String @id @default(cuid())
+  email          String? @unique
+  passwordHash   String?
+  username       String @unique
+
+  discordId      String @unique          // 👈 REQUIRED now
+  discordName    String?
+  discordAvatar  String?
+
+  createdAt DateTime @default(now())
+  bets      Bet[]
 }
