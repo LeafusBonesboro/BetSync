@@ -19,10 +19,11 @@ export class AuthController {
     return this.authService.redirectToDiscord(res);
   }
 
-  @Get("discord/callback")
-  async discordCallback(@Query("code") code: string, @Res() res) {
-    return this.authService.handleDiscordCallback(code, res);
-  }
+ @Get("discord/callback")
+async discordCallback(@Query("code") code: string, @Res() res) {
+  return this.authService.handleDiscordCallback(code, res);
+}
+
 
   @Get("me")
 @UseGuards(JwtAuthGuard)
