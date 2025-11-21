@@ -23,9 +23,7 @@ export default function TopBar() {
           Bets
         </Link>
 
-        <Link href="/analysis" className="hover:text-white">
-          Analysis
-        </Link>
+        
       </nav>
 
       {/* RIGHT — USER SECTION */}
