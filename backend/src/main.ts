@@ -9,15 +9,33 @@ import cookieParser from "cookie-parser";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Required for reading cookies in auth
   app.use(cookieParser());
 
-  // CORS for cookies
+  // 🔥 FIX FOR SAFARI + RENDER + CROSS-DOMAIN COOKIES
   app.enableCors({
-    origin: ["http://localhost:3000",
-      "https://bet-sync-vuzf.vercel.app",
-    "https://bet-sync-beige.vercel.app",],
+    origin: (origin, callback) => {
+      callback(null, true); // allow all origins (for Vercel etc.)
+    },
     credentials: true,
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    allowedHeaders: "Content-Type, Authorization, X-Requested-With",
+  });
+
+  // 🔥 Required for Safari & iOS WebView to allow cookies
+  app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    );
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    
+    // Handle OPTIONS preflight requests
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+
+    next();
   });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
