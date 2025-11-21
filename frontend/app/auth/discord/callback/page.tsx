@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DiscordCallback() {
   const router = useRouter();
@@ -15,12 +15,11 @@ export default function DiscordCallback() {
       }
 
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/discord/callback`, {
-  method: "POST",
-  credentials: "include",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ code }),
-});
-
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
 
       router.push("/dashboard");
     }
