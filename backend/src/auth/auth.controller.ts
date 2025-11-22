@@ -19,33 +19,36 @@ export class AuthController {
 
   @Get("discord")
   redirectToDiscord(@Res() res: Response) {
+    console.log("➡️ /auth/discord redirect requested");
     return this.authService.redirectToDiscord(res);
   }
 
-  // ⭐ Keep GET for local dev callback
- // Dev: Discord -> Backend
-@Get("discord/callback")
-async discordCallbackGET(
-  @Query("code") code: string,
-  @Res() res: Response
-) {
-  return this.authService.handleDiscordCallback(code, res);
-}
+  // ⭐ GET callback (for direct redirect from Discord in dev)
+  @Get("discord/callback")
+  async discordCallbackGET(
+    @Query("code") code: string,
+    @Res() res: Response
+  ) {
+    console.log("📥 GET /auth/discord/callback");
+    console.log("📥 Received code:", code);
+    return this.authService.handleDiscordCallback(code, res);
+  }
 
-// Prod: Discord -> Frontend -> Backend
-@Post("discord/callback")
-async discordCallbackPOST(
-  @Body("code") code: string,
-  @Res() res: Response
-) {
-  return this.authService.handleDiscordCallback(code, res);
-}
-
+  // ⭐ POST callback (frontend -> backend in prod)
+  @Post("discord/callback")
+  async discordCallbackPOST(
+    @Body("code") code: string,
+    @Res() res: Response
+  ) {
+    console.log("📥 POST /auth/discord/callback");
+    console.log("📥 Received code:", code);
+    return this.authService.handleDiscordCallback(code, res);
+  }
 
   @Get("me")
   @UseGuards(JwtAuthGuard)
   me(@Req() req) {
+    console.log("🔎 /auth/me (userId):", req.user?.userId);
     return this.authService.me(req.user.userId);
   }
 }
-

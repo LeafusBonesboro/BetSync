@@ -9,19 +9,28 @@ export default function DiscordCallback() {
   useEffect(() => {
     async function finishLogin() {
       const code = new URLSearchParams(window.location.search).get("code");
+      console.log("📥 Received OAuth code:", code);
+
       if (!code) {
         router.push("/login?error=missing_code");
         return;
       }
 
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/discord/callback`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/discord/callback`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
 
-      router.push("/dashboard");
+        console.log("📡 Callback POST response status:", res.status);
+        console.log("📡 Callback POST headers:", [...res.headers.entries()]);
+
+        router.push("/dashboard");
+      } catch (err) {
+        console.error("❌ Callback POST failed:", err);
+      }
     }
 
     finishLogin();
