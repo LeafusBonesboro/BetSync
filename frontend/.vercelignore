@@ -4,3 +4,7 @@ discord-bot/
 .gitignore
 *.md
 node_modules/
+archive/
+archive/*
+*.test.ts
+*.test.tsx
