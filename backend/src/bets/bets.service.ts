@@ -1,58 +1,88 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { BetsGateway } from './bets.gateway';
+import { Injectable, BadRequestException, Inject } from "@nestjs/common";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { BetsGateway } from "./bets.gateway";
 
 @Injectable()
 export class BetsService {
   constructor(
-    private prisma: PrismaService,
-    private gateway: BetsGateway,   // ⭐ inject gateway
+    @Inject("SUPABASE_ADMIN") private admin: SupabaseClient,
+    private gateway: BetsGateway
   ) {}
 
   async createFromDiscord(data: any) {
-    const user = await this.prisma.user.findUnique({
-      where: { discordId: data.discordId },
-    });
+    const { data: users, error: userErr } = await this.admin
+      .from("users")
+      .select("*")
+      .eq("discord_id", data.discordId)
+      .limit(1);
 
-    if (!user) {
-      throw new BadRequestException(`No user found with discordId: ${data.discordId}`);
+    if (userErr) throw userErr;
+    if (!users || users.length === 0) {
+      throw new BadRequestException(
+        `No user found with discordId: ${data.discordId}`
+      );
     }
 
-    const bet = await this.prisma.bet.create({
-      data: {
+    const user = users[0];
+
+    const { data: bet, error: betErr } = await this.admin
+      .from("bets")
+      .insert({
         event: data.event,
         market: data.market,
         stake: data.stake,
         odds: data.odds,
         status: data.status,
-        imageUrl: data.imageUrl,
         link: data.link,
-        rawText: data.rawText,
-        userId: user.id,
-      },
-    });
+        raw_text: data.rawText,
+        image_url: data.imageUrl,
+        user_id: user.id,
+      })
+      .select()
+      .single();
 
-    // ⭐ Send real-time update to frontend
+    if (betErr) throw betErr;
+
+    // Emit to socket listeners
     this.gateway.emitNewBet(user.id, bet);
 
     return bet;
   }
 
-  async findByUser(userId: string) {
-    return this.prisma.bet.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
+  async findByUser(authUserId: string) {
+    // 1) Translate auth ID → internal user.id
+    const { data: users, error: userErr } = await this.admin
+      .from("users")
+      .select("id")
+      .eq("auth_user_id", authUserId)
+      .limit(1);
 
-  async findOne(id: number) {
-    return this.prisma.bet.findUnique({
-      where: { id },
-      include: { user: true },
-    });
-  }
+    if (userErr) throw userErr;
+    if (!users || users.length === 0) return [];
 
-  async delete(id: number) {
-    return this.prisma.bet.delete({ where: { id } });
+    const realUserId = users[0].id;
+
+    // 2) Fetch bets for that user
+    const { data: bets, error } = await this.admin
+      .from("bets")
+      .select("*")
+      .eq("user_id", realUserId)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    // 3) Normalize rows → frontend expects camelCase
+    return bets.map((b) => ({
+      id: b.id,
+      event: b.event,
+      market: b.market,
+      stake: b.stake,
+      odds: b.odds,
+      status: b.status,
+      link: b.link,
+      rawText: b.raw_text,
+      createdAt: b.created_at,
+      imageUrl: b.image_url,
+    }));
   }
 }

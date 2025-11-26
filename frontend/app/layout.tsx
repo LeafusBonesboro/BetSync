@@ -1,11 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
-
-import TopBar from "@/components/global/TopBar";
-import BottomNav from "@/components/global/BottomNav";
-
-import LoginModal from "@/components/auth/LoginModal";
-import { AuthProvider } from "@/components/auth/AuthContext";
+import LayoutShell from "@/components/global/LayoutShell";
+import { AuthProvider } from "@/app/providers/AuthProvider"; // ⬅ ADD THIS
 
 export const metadata: Metadata = {
   title: "BetSync",
@@ -36,28 +32,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-[#0B0B0F] text-white min-h-screen flex flex-col">
-
-        {/* 🔥 WRAP EVERYTHING IN THE AUTH PROVIDER */}
+        
+        {/* 🔥 WRAP YOUR APP WITH AUTH PROVIDER */}
         <AuthProvider>
-
-          {/* GLOBAL TOP BAR */}
-          <header className="sticky top-0 z-50">
-            <TopBar />
-          </header>
-
-          {/* LOGIN MODAL (HIDDEN UNTIL TRIGGERED) */}
-          <LoginModal />
-
-          {/* MAIN APP CONTENT */}
-          <main className="flex-1 overflow-y-auto pb-20">
+          <LayoutShell>
             {children}
-          </main>
-
-          {/* BOTTOM NAVIGATION */}
-          <footer className="sticky bottom-0 z-50">
-            <BottomNav />
-          </footer>
-
+          </LayoutShell>
         </AuthProvider>
 
       </body>

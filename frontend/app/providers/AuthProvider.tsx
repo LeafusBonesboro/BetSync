@@ -1,61 +1,44 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { fetchMe } from "@/lib/api";
-
-interface User {
-  id: string;
-  email: string | null;
-  discordId: string | null;
-  discordName: string | null;
-  discordAvatar: string | null;
-}
+import { createClient } from "@/utils/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
-  refreshUser: () => Promise<void>;
-  logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Auto-load session on startup
-  const refreshUser = async () => {
-    try {
-      const me = await fetchMe();
-      setUser(me);
-    } catch {
-      setUser(null);
-    }
-  };
 
   useEffect(() => {
-    refreshUser().finally(() => setLoading(false));
-  }, []);
-
-  // Logout (clear cookie on backend)
-  const logout = async () => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
-      method: "POST",
-      credentials: "include",
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user ?? null);
     });
-    setUser(null);
-  };
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, refreshUser, logout }}>
+    <AuthContext.Provider value={{ user }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export const useUser = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useUser must be inside <AuthProvider>");
-  return ctx;
-};
+export function useUser() {
+  return useContext(AuthContext);
+}

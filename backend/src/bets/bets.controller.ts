@@ -9,34 +9,48 @@ import {
   Req
 } from '@nestjs/common';
 import { BetsService } from './bets.service';
-import { JwtAuthGuard } from '../auth/guards/jwt.guard';
+import { SupabaseAuthGuard } from '../auth/supabase.guard';
 
 @Controller('bets')
 export class BetsController {
   constructor(private readonly betsService: BetsService) {}
 
-  // ⭐ Create bet from Discord bot (no auth)
+  /**
+   * Discord bot creates bets (no auth)
+   */
   @Post()
   async createFromDiscord(@Body() data: any) {
     return this.betsService.createFromDiscord(data);
   }
 
-  // ⭐ Get all bets for current user
-  @UseGuards(JwtAuthGuard)
+  /**
+   * Authenticated user retrieves their own bets
+   * req.user.id = Supabase Auth user ID
+   */
+  @UseGuards(SupabaseAuthGuard)
   @Get('by-user')
   async getMyBets(@Req() req) {
-    return this.betsService.findByUser(req.user.userId);
+    const authUserId = req.user.id; // clarity
+    return this.betsService.findByUser(authUserId);
   }
 
-  // ⭐ Get one bet by id
+  /**
+   * Get a single bet belonging to authenticated user
+   */
+  @UseGuards(SupabaseAuthGuard)
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.betsService.findOne(Number(id)); // 🔥 FIX: pass ID correctly
+  async findOne(@Param('id') id: string, @Req() req) {
+    const authUserId = req.user.id;
+    return this.betsService.findOne(Number(id), authUserId);
   }
 
-  // ⭐ Delete bet
+  /**
+   * Delete a bet belonging to authenticated user
+   */
+  @UseGuards(SupabaseAuthGuard)
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.betsService.delete(Number(id)); // 🔥 FIX
+  async remove(@Param('id') id: string, @Req() req) {
+    const authUserId = req.user.id;
+    return this.betsService.delete(Number(id), authUserId);
   }
 }

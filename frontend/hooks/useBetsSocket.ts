@@ -1,30 +1,24 @@
-"use client";
-
 import { useEffect } from "react";
-import { io, Socket } from "socket.io-client";
+import io from "socket.io-client";
+
+const socket = io(process.env.NEXT_PUBLIC_API_URL!, {
+  transports: ["websocket"],
+});
 
 export default function useBetsSocket(
-  userId: string | undefined,
+  publicUserId: string | null,
   onNewBet: (bet: any) => void
 ) {
   useEffect(() => {
-    if (!userId) return; // 🚫 return NOTHING (not a function!)
+    if (!publicUserId) return;
 
-    const socket: Socket = io(process.env.NEXT_PUBLIC_API_URL!, {
-      transports: ["websocket"],
-    });
+    console.log("Joining room:", publicUserId);
+    socket.emit("join", publicUserId);
 
-    // join user's personal room
-    socket.emit("join", userId);
+    socket.on("newBet", onNewBet);
 
-    // listen for new bets
-    socket.on("bet:new", (bet) => {
-      onNewBet(bet);
-    });
-
-    // ✅ CLEANUP MUST ALWAYS RETURN A FUNCTION
     return () => {
-      socket.disconnect();
+      socket.off("newBet", onNewBet);
     };
-  }, [userId, onNewBet]);
+  }, [publicUserId]);
 }

@@ -1,6 +1,6 @@
-import React from "react";
+"use client";
 
-interface Bet {
+export interface Bet {
   id: number;
   event: string;
   market: string;
@@ -10,7 +10,7 @@ interface Bet {
   imageUrl?: string;
   link?: string;
   rawText?: string;
-  createdAt: string;
+  created_at: string; // <-- unified, matches DB + page.tsx
 }
 
 interface BetsListProps {
@@ -20,27 +20,33 @@ interface BetsListProps {
 export default function BetsList({ bets }: BetsListProps) {
   if (!bets || bets.length === 0) {
     return (
-      <p className="text-white p-6 text-center">
+      <p className="text-center text-gray-400 mt-10">
         You have no bets yet.
       </p>
     );
   }
 
   return (
-    <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="flex flex-col gap-4 p-4">
       {bets.map((bet) => (
         <div
           key={bet.id}
-          className="border rounded-xl p-4 shadow bg-white"
+          className="bg-[#1a1a20] border border-gray-700 rounded-lg p-4 text-white"
         >
-          <h2 className="text-xl font-semibold">{bet.event}</h2>
+          <p className="text-gray-400 text-sm">{bet.created_at}</p>
+          <h2 className="text-lg font-bold">{bet.event}</h2>
           <p>{bet.market}</p>
-          <p className="text-sm text-gray-600 mt-2">
-            Stake: ${bet.stake} | Odds: {bet.odds}
-          </p>
-          <p className="text-xs text-gray-400 mt-2">
-            Status: {bet.status}
-          </p>
+          <p>Stake: ${bet.stake}</p>
+          <p>Odds: +{bet.odds}</p>
+          <p>Status: {bet.status}</p>
+
+          {bet.imageUrl && (
+            <img
+              src={bet.imageUrl}
+              alt="Bet slip"
+              className="mt-2 rounded-lg border border-gray-700"
+            />
+          )}
         </div>
       ))}
     </div>

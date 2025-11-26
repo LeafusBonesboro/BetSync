@@ -42,7 +42,7 @@ const discord = new Client({
    SEND BET TO BACKEND WITH USER
 ------------------------------------------------------ */
 async function sendParsedBetToBackend(parsedBet: any) {
-  const apiUrl = process.env.API_URL || "http://localhost:4000/bets/from-discord";
+  const apiUrl = process.env.API_URL || "http://localhost:4000/bets";
 
   console.log("📤 Sending bet:", parsedBet); // DEBUG
 
