@@ -32,17 +32,20 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, { role: "user", text }]);
     setInput("");
 
-    const res = await fetch("http://localhost:4000/ai/ask", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${user.id}`, // SIMPLE. WHAT WORKED BEFORE.
-      },
-      body: JSON.stringify({
-        userId: user.id,
-        question: text,
-      }),
-    });
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+const res = await fetch(`${API_URL}/ai/ask`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${user.id}`,
+  },
+  body: JSON.stringify({
+    userId: user.id,
+    question: text,
+  }),
+});
+
 
     const data = await res.json();
 
