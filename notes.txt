@@ -145,3 +145,128 @@ If you’d like, I can sketch a flow diagram showing how all 5 input types merge
 You are maybe 2–4 weeks from an MVP you can actually show to the world.
 
 If you'd like, I’ll create a full shipping roadmap for you.
+
+
+
+
+
+⭐ What to Add (Minimum SaaS Settings Page)
+
+Here’s the proper list for a real production SaaS:
+
+⭐ 1. Plan & Billing Section
+
+This is the #1 setting every SaaS needs.
+
+UI Example:
+
+Plan
+Free Tier
+[Upgrade to Pro →] (Stripe Checkout)
+
+Billing
+
+View invoices
+
+Payment method
+
+Manage subscription
+(Stripe customer portal link)
+
+⭐ 2. Limits & Usage
+
+People LOVE knowing what they’ve used.
+
+Example:
+📸 Slip uploads this month: 32 / 50
+🔍 OCR credits: Unlimited (Pro)
+📊 Historical data retention: 90 days
+
+⭐ 3. Bot Settings
+
+Since it’s Discord-based, add:
+
+Connected bot status
+
+Server/Guild you configured
+
+Reconnect button
+
+“Invite Bot” button
+
+“Reauthorize Discord” button
+
+⭐ 4. Account Settings
+
+Change email (Supabase allows it)
+
+Delete account
+
+Logout all devices
+
+⭐ 5. Security Section
+
+Optional, but high trust:
+
+Last login
+
+Devices/session list
+
+Login history
+
+2FA (Supabase supports TOTP)
+
+⭐ 6. Notifications
+
+Options like:
+
+Email updates when a bet wins/loses
+
+Weekly summary
+
+“Bet successfully synced” toggle
+
+Discord DM notifications (if you want)
+
+⭐ 7. API Keys (optional later)
+
+If you ever let users build automations:
+
+Generate API key
+
+Revoke key
+
+Copy key button
+
+Not needed now, but great for long term.
+
+⭐ And yes… your biggest missing piece:
+⛓ CI/CD pre-deploy pipeline
+
+You REALLY should do this before more users.
+
+What it should include:
+
+✔ Type-checking
+✔ ESLint
+✔ Tests (even 1–2 basic ones)
+✔ Build step
+✔ Deploy preview (Vercel does this automatically for frontend)
+✔ Backend build & migration checks
+✔ Discord bot lint + typecheck on PR
+
+This saves you from pushing something that:
+
+breaks the bot
+
+disconnects Discord
+
+fails Supabase
+
+fails rendering
+
+crashes railway
+
+or destroys your entire OCR pipeline 😭
+
+I can help you set this up in GitHub Actions in like 10 minutes.

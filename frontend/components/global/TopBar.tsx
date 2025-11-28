@@ -4,29 +4,11 @@ import Link from "next/link";
 import { useUser } from "@/app/providers/AuthProvider";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import LinkDiscordButton from "@/components/LinkDiscordButton";
 
 export default function TopBar() {
   const { user } = useUser();
   const supabase = createClient();
   const router = useRouter();
-
-  const [profile, setProfile] = useState<any>(null);
-
-  useEffect(() => {
-    if (!user) return;
-    const load = async () => {
-      const { data } = await supabase
-        .from("users")
-        .select("*")
-        .eq("auth_user_id", user.id)
-        .single();
-
-      setProfile(data);
-    };
-    load();
-  }, [user]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -34,63 +16,42 @@ export default function TopBar() {
   }
 
   return (
-    <header className="w-full bg-[#121218] border-b border-gray-800 py-3 px-6 flex items-center justify-between">
-      
-      {/* LEFT — LOGO */}
-      <Link href="/" className="text-xl font-bold text-white">
-        BetSync
-      </Link>
+    <header className="w-full bg-[#121218] border-b border-gray-800 px-4 py-2">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 
-      {/* CENTER NAV */}
-      <nav className="flex gap-6 text-gray-300">
-        <Link href="/bets" className="hover:text-white">Bets</Link>
-        <Link href="/settings" className="hover:text-white">Settings</Link>
-      </nav>
+        {/* LOGO + NAV */}
+        <div className="flex items-center justify-between md:justify-start w-full gap-6">
 
-      {/* RIGHT SIDE */}
-      <div className="flex items-center gap-4 text-gray-300">
+          <Link href="/" className="text-xl font-bold text-white">
+            BetSync
+          </Link>
 
-        {/* If logged in */}
-        {user && (
-          <>
-            <span className="text-sm">
-              Logged in as <span className="text-white">{user.email}</span>
-            </span>
+          <nav className="flex gap-4 text-gray-300 text-sm md:text-base">
+            <Link href="/bets" className="hover:text-white">Bets</Link>
+            <Link href="/settings" className="hover:text-white">Settings</Link>
+            <Link href="/chat" className="hover:text-white">Chat</Link>
+          </nav>
+        </div>
 
-            {/* ⭐ Discord Linked UI ⭐ */}
-            {profile?.discord_id ? (
-              <div className="flex items-center gap-2">
-                <img
-                  src={profile.discord_avatar}
-                  className="w-8 h-8 rounded-full border border-gray-700"
-                />
-                <span className="text-white text-sm">
-                  {profile.discord_name}
-                </span>
-              </div>
-            ) : (
-              <LinkDiscordButton />
-            )}
+        {/* RIGHT SIDE — LOGIN / LOGOUT ONLY */}
+        <div className="flex items-center gap-3 text-gray-300">
 
+          {user ? (
             <button
               onClick={handleLogout}
-              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs md:text-sm"
             >
               Log out
             </button>
-          </>
-        )}
-
-        {/* If NOT logged in */}
-        {!user && (
-          <Link
-            href="/login"
-            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Log in
-          </Link>
-        )}
-
+          ) : (
+            <Link
+              href="/login"
+              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs md:text-sm"
+            >
+              Log in
+            </Link>
+          )}
+        </div>
       </div>
     </header>
   );

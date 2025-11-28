@@ -10,22 +10,25 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   const hideChrome = pathname === "/login" || pathname === "/register";
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-[#0B0B0F]">
+      {/* Top Navigation */}
       {!hideChrome && (
-        <header className="sticky top-0 z-50">
+        <header className="sticky top-0 z-50 bg-[#0B0B0F] border-b border-gray-800">
           <TopBar />
         </header>
       )}
 
-      <main className="flex-1 overflow-y-auto pb-20">
+      {/* Main Page Content */}
+      <main className="flex-1 overflow-y-auto px-3 pb-24 pt-2">
         {children}
       </main>
 
+      {/* Bottom Navigation */}
       {!hideChrome && (
-        <footer className="sticky bottom-0 z-50">
+        <footer className="fixed bottom-0 left-0 right-0 z-50 bg-[#0B0B0F] border-t border-gray-800">
           <BottomNav />
         </footer>
       )}
-    </>
+    </div>
   );
 }

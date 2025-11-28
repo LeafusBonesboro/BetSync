@@ -38,7 +38,9 @@ export default function SettingsPage() {
 
   if (loading)
     return (
-      <div className="p-6 text-center text-white">Loading profile…</div>
+      <div className="p-6 text-center text-white">
+        Loading profile…
+      </div>
     );
 
   return (
@@ -55,7 +57,7 @@ export default function SettingsPage() {
       <div className="bg-gray-900 p-4 rounded-lg">
         <p className="text-gray-400 text-sm mb-2">Discord</p>
 
-        {profile.discord_id ? (
+        {profile?.discord_id ? (
           <div className="flex items-center gap-4">
             <img
               src={profile.discord_avatar}
@@ -77,13 +79,6 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* Debug Info */}
-      <div className="bg-gray-900 p-4 rounded-lg">
-        <p className="text-gray-400 text-sm mb-1">Debug User Object</p>
-        <pre className="bg-black p-3 rounded-lg text-xs overflow-x-auto">
-{JSON.stringify({ authUser: user, profile }, null, 2)}
-        </pre>
-      </div>
     </div>
   );
 }

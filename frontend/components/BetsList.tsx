@@ -2,15 +2,8 @@
 
 export interface Bet {
   id: number;
-  event: string;
-  market: string;
-  stake: number;
-  odds: number;
-  status: string;
-  imageUrl?: string;
-  link?: string;
-  rawText?: string;
-  created_at: string; // <-- unified, matches DB + page.tsx
+  imageUrl: string;
+  createdAt?: string;
 }
 
 interface BetsListProps {
@@ -27,26 +20,25 @@ export default function BetsList({ bets }: BetsListProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="space-y-8 mt-6 px-4 flex flex-col items-center">
       {bets.map((bet) => (
         <div
           key={bet.id}
-          className="bg-[#1a1a20] border border-gray-700 rounded-lg p-4 text-white"
+          className="bg-[#1b1b22] border border-gray-800 rounded-xl p-4 w-full max-w-xl"
         >
-          <p className="text-gray-400 text-sm">{bet.created_at}</p>
-          <h2 className="text-lg font-bold">{bet.event}</h2>
-          <p>{bet.market}</p>
-          <p>Stake: ${bet.stake}</p>
-          <p>Odds: +{bet.odds}</p>
-          <p>Status: {bet.status}</p>
+          {/* Timestamp */}
+          <p className="text-xs text-gray-500 mb-3">
+            {bet.createdAt
+              ? new Date(bet.createdAt).toLocaleString()
+              : ""}
+          </p>
 
-          {bet.imageUrl && (
-            <img
-              src={bet.imageUrl}
-              alt="Bet slip"
-              className="mt-2 rounded-lg border border-gray-700"
-            />
-          )}
+          {/* BET SLIP IMAGE */}
+          <img
+            src={bet.imageUrl}
+            alt="Bet Slip"
+            className="rounded-lg border border-gray-700 w-full h-auto max-h-[500px] object-contain"
+          />
         </div>
       ))}
     </div>

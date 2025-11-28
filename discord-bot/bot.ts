@@ -11,7 +11,9 @@ dotenv.config();
 ------------------------------------------------------ */
 let credentials: any = {};
 try {
-  credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || "{}");
+  credentials = JSON.parse(
+    process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || "{}"
+  );
 
   if (credentials.private_key) {
     credentials.private_key = credentials.private_key.replace(/\\n/g, "\n");
@@ -39,12 +41,58 @@ const discord = new Client({
 });
 
 /* ------------------------------------------------------
-   SEND BET TO BACKEND WITH USER
+   SMART API ROUTING (LOCAL FOR YOU, PROD FOR EVERYONE ELSE)
+------------------------------------------------------ */
+
+// YOUR Discord ID — ONLY you get localhost access
+const DEV_DISCORD_ID = "168204371929202689";
+
+async function resolveApiUrl(authorId: string) {
+  const localUrl = "http://localhost:4000/bets";
+  const prodUrl = process.env.API_URL; // Render backend URL
+
+  // Safety check
+  if (!prodUrl) {
+    console.error("❌ Missing API_URL in .env!");
+    return localUrl; // fallback
+  }
+
+  // If author is NOT you → always use PROD
+  if (authorId !== DEV_DISCORD_ID) {
+    return prodUrl;
+  }
+
+  // For YOU → check if local backend is running
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 500);
+
+    const res = await fetch(localUrl, {
+      method: "HEAD",
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (res.ok) {
+      console.log("🟢 Using LOCAL backend:", localUrl);
+      return localUrl;
+    }
+  } catch (_) {
+    // ignore
+  }
+
+  console.log("🟣 Using PROD backend:", prodUrl);
+  return prodUrl;
+}
+
+/* ------------------------------------------------------
+   SEND BET TO BACKEND
 ------------------------------------------------------ */
 async function sendParsedBetToBackend(parsedBet: any) {
-  const apiUrl = process.env.API_URL || "http://localhost:4000/bets";
+  const apiUrl = await resolveApiUrl(parsedBet.discordId);
 
-  console.log("📤 Sending bet:", parsedBet); // DEBUG
+  console.log("📤 Sending bet to:", apiUrl);
 
   const res = await fetch(apiUrl, {
     method: "POST",
@@ -67,7 +115,7 @@ async function extractTextFromImage(imageUrl: string) {
     const [result] = await visionClient.textDetection(imageUrl);
     const text = result.textAnnotations?.[0]?.description || "";
 
-    console.log("🧠 OCR Extracted Text (first 200 chars):", text.slice(0, 200));
+    console.log("🧠 OCR Extracted Text:", text.slice(0, 200));
     return text;
   } catch (err) {
     console.error("❌ Vision API error:", err);
@@ -84,7 +132,9 @@ function extractEventName(text: string): string {
 }
 
 function extractMarket(text: string): string {
-  const line = text.split("\n").find((l) => /(Pts|Yards|Rebounds|Goals)/i);
+  const line = text
+    .split("\n")
+    .find((l) => /(Pts|Yards|Rebounds|Goals)/i.test(l));
   return line || "Unknown Market";
 }
 
@@ -99,7 +149,7 @@ function extractOdds(text: string): number {
 }
 
 /* ------------------------------------------------------
-   HANDLE UPLOADED SLIP (MAIN LOGIC)
+   HANDLE IMAGE LOGIC
 ------------------------------------------------------ */
 async function handleUploadedSlip(imageUrl: string, message: Message) {
   console.log(`🖼️ Image uploaded: ${imageUrl}`);
@@ -119,20 +169,20 @@ async function handleUploadedSlip(imageUrl: string, message: Message) {
     imageUrl,
     link: message.url,
     rawText: text,
-    discordId: message.author.id, // ⭐ ALWAYS ATTACH THE USER ID
+    discordId: message.author.id, // ⭐ REQUIRED for mapping to Supabase user
   };
 
-  console.log("📤 Sending bet with discordId:", message.author.id);
+  console.log("📩 Parsed bet:", parsedBet);
 
   await sendParsedBetToBackend(parsedBet);
 
   await message.reply(
-    `✅ Bet saved for **${message.author.username}**: **${parsedBet.event}** (${parsedBet.market})`
+    `✅ Bet saved for **${message.author.username}**`
   );
 }
 
 /* ------------------------------------------------------
-   LISTEN FOR DISCORD MESSAGES
+   DISCORD LISTENER
 ------------------------------------------------------ */
 discord.on("messageCreate", async (message: Message) => {
   if (message.author.bot) return;
@@ -145,7 +195,7 @@ discord.on("messageCreate", async (message: Message) => {
 });
 
 /* ------------------------------------------------------
-   CORRECT READY EVENT (YOU HAD THIS BROKEN!)
+   READY EVENT
 ------------------------------------------------------ */
 discord.once("ready", () => {
   console.log(`🤖 Logged in as ${discord.user?.tag}`);
