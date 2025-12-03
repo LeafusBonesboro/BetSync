@@ -7,7 +7,7 @@ import BottomNav from "./BottomNav";
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  const hideChrome = pathname === "/login" || pathname === "/register";
+  const hideChrome = pathname === "/" || pathname === "/login" || pathname === "/register";
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0B0B0F]">
