@@ -9,34 +9,35 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  async function handleRegister(e: React.FormEvent) {
+  async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setMessage("");
+    setLoading(true);
 
-    // Check if user already exists by trying login with wrong password
-    const { error: existsError } = await supabase.auth.signInWithPassword({
-      email,
-      password: "wrongpassword",
-    });
-
-    if (existsError && existsError.message === "Invalid login credentials") {
-      setMessage("This email is already registered.");
-      return;
-    }
-
-    // Continue with signup
+    // Attempt signup (Supabase handles duplicate check internally)
     const { error } = await supabase.auth.signUp({
       email,
       password,
     });
 
+    setLoading(false);
+
     if (error) {
-      setMessage(error.message);
+      // Friendly messages
+      if (error.message.includes("already registered")) {
+        setMessage("This email is already registered.");
+      } else if (error.message.includes("password")) {
+        setMessage("Password must meet minimum requirements.");
+      } else {
+        setMessage(error.message);
+      }
       return;
     }
 
-    setMessage("Check your email to confirm your account.");
+    // Success
+    setMessage("Success! Check your email to confirm your account.");
   }
 
   return (
@@ -48,14 +49,15 @@ export default function RegisterPage() {
         </h2>
 
         <form onSubmit={handleRegister} className="space-y-4">
+
           <div>
             <label className="text-sm">Email address</label>
             <input
               type="email"
-              className="w-full mt-1 px-3 py-2 bg-[#0f172a] border border-gray-600 rounded-md"
+              required
+              className="w-full mt-1 px-3 py-2 bg-[#0f172a] border border-gray-600 text-white rounded-md"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
             />
           </div>
 
@@ -63,18 +65,23 @@ export default function RegisterPage() {
             <label className="text-sm">Password</label>
             <input
               type="password"
-              className="w-full mt-1 px-3 py-2 bg-[#0f172a] border border-gray-600 rounded-md"
+              required
+              className="w-full mt-1 px-3 py-2 bg-[#0f172a] border border-gray-600 text-white rounded-md"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-indigo-500 hover:bg-indigo-600 py-2 rounded-md font-medium transition"
+            disabled={loading}
+            className={`w-full py-2 rounded-md font-medium transition ${
+              loading
+                ? "bg-gray-600 cursor-not-allowed"
+                : "bg-indigo-500 hover:bg-indigo-600"
+            }`}
           >
-            Register
+            {loading ? "Registering..." : "Register"}
           </button>
 
           {message && (
@@ -88,7 +95,6 @@ export default function RegisterPage() {
             Log in
           </a>
         </p>
-
       </div>
     </div>
   );

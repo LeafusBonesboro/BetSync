@@ -14,10 +14,12 @@ export default function LandingPage() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  // Redirect if logged in → onboarding
+  const DISCORD_SERVER_LINK = "https://discord.gg/kDeTsP229P";
+
+  // Redirect logged-in users
   useEffect(() => {
     if (!authLoading && user) {
-      router.replace("/onboarding");
+      router.replace("/bets");
     }
   }, [authLoading, user, router]);
 
@@ -29,8 +31,7 @@ export default function LandingPage() {
     );
   }
 
-  // LOGIN FUNCTIONS
-  async function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setMessage("");
 
@@ -39,33 +40,48 @@ export default function LandingPage() {
       password,
     });
 
-    if (error) return setMessage(error.message);
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
 
-    router.replace("/onboarding");
-  }
-
-  async function handleDiscordLogin() {
-    await supabase.auth.signInWithOAuth({
-      provider: "discord",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
-      },
-    });
+    router.replace("/bets");
   }
 
   async function handleResend() {
-    if (!email) return setMessage("Enter your email first.");
-    const { error } = await supabase.auth.resend({ type: "signup", email });
-    if (error) return setMessage(error.message);
+    if (!email) {
+      setMessage("Enter your email first.");
+      return;
+    }
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+    });
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
     setMessage("Confirmation email sent.");
   }
 
   async function handleForgotPassword() {
-    if (!email) return setMessage("Enter your email first.");
+    if (!email) {
+      setMessage("Enter your email first.");
+      return;
+    }
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-    if (error) return setMessage(error.message);
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
     setMessage("Password reset email sent.");
   }
 
@@ -73,40 +89,51 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#0d0d11] flex items-start justify-center px-6 py-10">
       <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-12">
 
-        {/* ---------------- LEFT SIDE — OLD LANDING PAGE ---------------- */}
+        {/* LEFT SIDE — HERO + NEW ONBOARDING FLOW */}
         <div className="text-left">
           <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight">
             BetSync — One place for <span className="text-amber-400">all your bets.</span>
           </h1>
 
           <p className="text-gray-300 text-lg md:text-xl mt-6 leading-relaxed">
-            Sportsbooks make it hard to find your wagers. BetSync fixes that with a
+            Sportsbooks make it hard to find your wagers. BetSync fixes that by giving you a 
             clean, unified feed that automatically organizes every bet slip you share.
           </p>
 
-          {/* Problem box */}
-          <div className="bg-[#121218] border border-gray-800 rounded-xl p-6 mt-10">
-            <h2 className="text-xl text-white font-semibold mb-3">The Problem</h2>
-            <ul className="text-gray-400 space-y-2">
-              <li>• You get logged out constantly</li>
-              <li>• You get spammed with promos</li>
-              <li>• You juggle 6 different sportsbook apps</li>
-              <li>• Your bet history is buried</li>
-              <li>• Checking results requires switching apps</li>
-            </ul>
-          </div>
+          <div className="space-y-6 mt-10">
 
-          {/* Solution box */}
-          <div className="bg-[#121218] border border-gray-800 rounded-xl p-6 mt-6">
-            <h2 className="text-xl text-white font-semibold mb-3">The Solution</h2>
-            <p className="text-gray-300">
-              Just share your slip to Discord. BetSync automatically detects it and
-              syncs it into your personal bet feed.
-            </p>
+            {/* STEP 1 */}
+            <div className="bg-[#121218] border border-gray-800 rounded-xl p-6">
+              <h2 className="text-xl text-white font-semibold mb-3">Step 1 — Create Your Account</h2>
+              <p className="text-gray-300">Sign up so BetSync can sync your bets into your personal dashboard.</p>
+            </div>
+
+            {/* STEP 2 */}
+            <div className="bg-[#121218] border border-gray-800 rounded-xl p-6">
+              <h2 className="text-xl text-white font-semibold mb-3">Step 2 — Join the Discord Server</h2>
+              <p className="text-gray-300 mb-4">The BetSync bot lives in our Discord server.</p>
+              <a
+                href={DISCORD_SERVER_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium"
+              >
+                Join Discord Server
+              </a>
+            </div>
+
+            {/* STEP 3 */}
+            <div className="bg-[#121218] border border-gray-800 rounded-xl p-6">
+              <h2 className="text-xl text-white font-semibold mb-3">Step 3 — Share Your First Bet</h2>
+              <p className="text-gray-300">
+                Open a bet slip → tap <b>Share</b> → choose <b>Discord</b> → select the BetSync bot.
+              </p>
+            </div>
+
           </div>
         </div>
 
-        {/* ---------------- RIGHT SIDE — LOGIN BOX ---------------- */}
+        {/* RIGHT SIDE — LOGIN BOX */}
         <div className="flex justify-center lg:justify-end">
           <div className="bg-[#121218] border border-gray-800 w-full max-w-md p-8 rounded-xl shadow-lg">
 
@@ -123,6 +150,7 @@ export default function LandingPage() {
                   className="w-full mt-1 px-3 py-2 bg-[#0f172a] border border-gray-700 text-white rounded-md"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
 
@@ -133,6 +161,7 @@ export default function LandingPage() {
                   className="w-full mt-1 px-3 py-2 bg-[#0f172a] border border-gray-700 text-white rounded-md"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
               </div>
 
@@ -152,24 +181,10 @@ export default function LandingPage() {
                 Log In
               </button>
 
-              {message && <p className="text-yellow-300 text-center text-sm">{message}</p>}
+              {message && (
+                <p className="text-yellow-300 text-center text-sm mt-2">{message}</p>
+              )}
             </form>
-
-            {/* Divider */}
-            <div className="my-6 flex items-center gap-3">
-              <div className="flex-1 h-px bg-gray-700" />
-              <span className="text-gray-400 text-sm">Or continue with</span>
-              <div className="flex-1 h-px bg-gray-700" />
-            </div>
-
-            <button
-              type="button"
-              onClick={handleDiscordLogin}
-              className="w-full flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 py-2 rounded-md text-white"
-            >
-              <img src="/discord.svg" className="w-5 h-5" />
-              Discord
-            </button>
 
             <p className="mt-4 text-center text-sm text-gray-400">
               Not a member?{" "}
