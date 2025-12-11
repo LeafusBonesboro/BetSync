@@ -1,16 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { useUser } from "@/app/providers/AuthProvider";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const supabase = createClient();
   const router = useRouter();
+  const { user, loading: authLoading } = useUser();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+
+  // ⭐ Auto-redirect if already logged in (FIX for reload issue)
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/bets");
+    }
+  }, [authLoading, user, router]);
+
+  // ⛔ Prevent flashing login screen during hydration
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-white">
+        Loading session…
+      </div>
+    );
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -26,7 +44,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/bets"); // redirect after login
+    router.replace("/bets");
   }
 
   async function handleResend() {
@@ -50,14 +68,15 @@ export default function LoginPage() {
     setMessage("Confirmation email sent again.");
   }
 
-  async function handleOAuth(provider: "google" | "discord") {
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-  }
+async function handleOAuth() {
+  await supabase.auth.signInWithOAuth({
+    provider: "discord",
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    },
+  });
+}
+
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-[#0f172a] text-white px-6">
@@ -119,18 +138,11 @@ export default function LoginPage() {
 
         {/* OAuth buttons */}
         <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => handleOAuth("google")}
-            className="flex-1 flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 py-2 rounded-md"
-          >
-            <img src="/google.svg" className="w-5 h-5" />
-            Google
-          </button>
+         
 
           <button
             type="button"
-            onClick={() => handleOAuth("discord")}
+            onClick={() => (handleOAuth)}
             className="flex-1 flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 py-2 rounded-md"
           >
             <img src="/discord.svg" className="w-5 h-5" />
@@ -144,7 +156,6 @@ export default function LoginPage() {
             Register
           </a>
         </p>
-
       </div>
     </div>
   );
